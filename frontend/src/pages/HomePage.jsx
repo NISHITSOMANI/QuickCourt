@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from 'react-query'
-import { 
-  Search, 
-  MapPin, 
-  Clock, 
-  Star, 
+import {
+  Search,
+  MapPin,
+  Clock,
+  Star,
   Users,
   Calendar,
   Shield,
@@ -19,7 +19,7 @@ import { venueApi } from '../api/venueApi'
 
 const HomePage = () => {
   const navigate = useNavigate()
-  
+
   // Fetch popular venues
   const { data: popularVenues, isLoading: loadingVenues } = useQuery(
     'popularVenues',
@@ -31,13 +31,13 @@ const HomePage = () => {
 
   const handleSearch = (searchData) => {
     const queryParams = new URLSearchParams()
-    
+
     Object.entries(searchData).forEach(([key, value]) => {
       if (value) {
         queryParams.append(key, value)
       }
     })
-    
+
     navigate(`/venues?${queryParams.toString()}`)
   }
 
@@ -185,43 +185,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Development Quick Links */}
-      {import.meta.env.DEV && (
-        <section className="py-8 bg-yellow-50 border-t border-yellow-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h3 className="text-lg font-semibold text-yellow-800 mb-4">🚧 Development Quick Links</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button
-                onClick={() => navigate('/my-bookings')}
-                className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                My Bookings (User)
-              </button>
-              <button
-                onClick={() => navigate('/owner')}
-                className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Owner Dashboard
-              </button>
-              <button
-                onClick={() => navigate('/admin')}
-                className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Admin Dashboard
-              </button>
-              <button
-                onClick={() => navigate('/booking')}
-                className="bg-orange-100 hover:bg-orange-200 text-orange-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Book a Court
-              </button>
-            </div>
-            <p className="text-xs text-yellow-700 mt-2">
-              💡 Use the "DEV: Switch User" button in the bottom-right to change user roles and access different pages.
-            </p>
-          </div>
-        </section>
-      )}
+
 
       {/* CTA Section */}
       <section className="py-16 bg-gray-900 text-white">

@@ -1,24 +1,33 @@
-import { Link } from 'react-router-dom'
-import { 
-  MapPin, 
-  Star, 
-  Clock, 
-  DollarSign, 
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import {
+  MapPin,
+  Star,
+  Clock,
+  DollarSign,
   Users,
   Wifi,
   Car,
   Coffee,
   Shield
 } from 'lucide-react'
+import { useBooking } from '../context/BookingContext'
+import { useAuth } from '../context/AuthContext'
+import PaymentMethodModal from './PaymentMethodModal'
 
 const VenueCard = ({ venue, className = '' }) => {
+  const navigate = useNavigate()
+  const { setSelectedVenue } = useBooking()
+  const { isAuthenticated } = useAuth()
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+
   const {
     _id,
     name,
     description,
     address,
     shortLocation,
-    photos = [],
+    images = [],
     sports = [],
     startingPrice,
     rating = 0,
@@ -26,6 +35,39 @@ const VenueCard = ({ venue, className = '' }) => {
     amenities = [],
     operatingHours,
   } = venue
+
+  const handleBookNow = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!isAuthenticated) {
+      // Store venue info and redirect to login page
+      setSelectedVenue(venue)
+      navigate('/login', {
+        state: {
+          from: `/venues/${_id}`,
+          action: 'booking',
+          venue: venue
+        }
+      })
+      return
+    }
+
+    setSelectedVenue(venue)
+    setShowPaymentModal(true)
+  }
+
+  const handlePaymentMethodSelect = (paymentMethod) => {
+    // For now, just navigate to booking page with selected venue and payment method
+    // In a real app, you might want to create the booking directly
+    setShowPaymentModal(false)
+    navigate('/booking', {
+      state: {
+        selectedVenue: venue,
+        selectedPaymentMethod: paymentMethod
+      }
+    })
+  }
 
   const getAmenityIcon = (amenity) => {
     const iconMap = {
@@ -49,22 +91,21 @@ const VenueCard = ({ venue, className = '' }) => {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
-        className={`w-4 h-4 ${
-          index < Math.floor(rating)
-            ? 'text-yellow-400 fill-current'
-            : 'text-gray-300'
-        }`}
+        className={`w-4 h-4 ${index < Math.floor(rating)
+          ? 'text-yellow-400 fill-current'
+          : 'text-gray-300'
+          }`}
       />
     ))
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 ${className}`}>
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full ${className}`}>
       {/* Image */}
       <div className="relative h-48 bg-gray-200">
-        {photos.length > 0 ? (
+        {images.length > 0 ? (
           <img
-            src={photos[0]}
+            src={images[0]}
             alt={name}
             className="w-full h-full object-cover"
           />
@@ -73,7 +114,7 @@ const VenueCard = ({ venue, className = '' }) => {
             <Users className="w-12 h-12 text-gray-400" />
           </div>
         )}
-        
+
         {/* Price Badge */}
         <div className="absolute top-3 right-3 bg-white rounded-full px-3 py-1 shadow-md">
           <div className="flex items-center space-x-1">
@@ -103,7 +144,7 @@ const VenueCard = ({ venue, className = '' }) => {
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 flex flex-col h-full">
         {/* Header */}
         <div className="mb-2">
           <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">
@@ -163,14 +204,38 @@ const VenueCard = ({ venue, className = '' }) => {
           </div>
         )}
 
-        {/* Action Button */}
-        <Link
-          to={`/venues/${_id}`}
-          className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors text-center block"
-        >
-          View Details & Book
-        </Link>
+        {/* Action Buttons */}
+        <div className="flex space-x-2 mt-auto">
+          <button
+            type="button"
+            onClick={() => navigate(`/venues/${_id}`)}
+            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md text-sm font-medium transition-colors text-center border border-gray-300 cursor-pointer"
+          >
+            View Details
+          </button>
+          <button
+            type="button"
+            onClick={handleBookNow}
+            className="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors text-center cursor-pointer"
+          >
+            Book Now
+          </button>
+        </div>
       </div>
+
+      {/* Payment Method Modal */}
+      <PaymentMethodModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onPaymentMethodSelect={handlePaymentMethodSelect}
+        totalAmount={startingPrice}
+        bookingDetails={{
+          venueName: name,
+          courtName: 'Available courts',
+          date: 'To be selected',
+          timeSlot: 'To be selected'
+        }}
+      />
     </div>
   )
 }
