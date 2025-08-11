@@ -50,11 +50,6 @@ class Database {
         logger.info('MongoDB reconnected');
         this.isConnected = true;
       });
-
-      // Graceful shutdown
-      process.on('SIGINT', this.gracefulShutdown.bind(this));
-      process.on('SIGTERM', this.gracefulShutdown.bind(this));
-
       return this.connection;
     } catch (error) {
       logger.error('Database connection failed:', error);
@@ -65,24 +60,16 @@ class Database {
   async disconnect() {
     try {
       if (this.connection) {
+        // Remove all listeners for the 'disconnected' event to prevent the WARN log during a planned shutdown.
+        mongoose.connection.removeAllListeners('disconnected');
+
+        // Now, close the connection.
         await mongoose.connection.close();
         this.isConnected = false;
-        logger.info('Database connection closed');
       }
     } catch (error) {
       logger.error('Error closing database connection:', error);
       throw error;
-    }
-  }
-
-  async gracefulShutdown(signal) {
-    logger.info(`Received ${signal}. Gracefully shutting down database...`);
-    try {
-      await this.disconnect();
-      process.exit(0);
-    } catch (error) {
-      logger.error('Error during graceful shutdown:', error);
-      process.exit(1);
     }
   }
 
@@ -103,7 +90,7 @@ class Database {
 
       // Simple ping to check connection
       await mongoose.connection.db.admin().ping();
-      
+
       return {
         status: 'healthy',
         readyState: mongoose.connection.readyState,
