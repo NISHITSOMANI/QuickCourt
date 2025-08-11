@@ -145,6 +145,7 @@ const RegisterPage = () => {
                 >
                   <option value="user">Player - Book courts and play</option>
                   <option value="owner">Venue Owner - List and manage venues</option>
+                  <option value="admin">Administrator - Manage platform</option>
                 </select>
               </div>
               {errors.role && (
