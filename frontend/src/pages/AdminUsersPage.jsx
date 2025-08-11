@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { 
-  Users, 
-  Search, 
+import {
+  Users,
+  Search,
   Filter,
   MoreVertical,
   Shield,
@@ -11,7 +11,9 @@ import {
   Mail,
   Calendar
 } from 'lucide-react'
+import DashboardLayout from '../components/DashboardLayout'
 import Pagination from '../components/Pagination'
+import { adminApi } from '../api/dashboardApi'
 import toast from 'react-hot-toast'
 
 const AdminUsersPage = () => {
@@ -126,13 +128,10 @@ const AdminUsersPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-2">Manage platform users and their permissions</p>
-        </div>
+    <DashboardLayout
+      title="User Management"
+      subtitle="Manage platform users and their permissions"
+    >
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -330,8 +329,7 @@ const AdminUsersPage = () => {
             </>
           )}
         </div>
-      </div>
-    </div>
+    </DashboardLayout>
   )
 }
 

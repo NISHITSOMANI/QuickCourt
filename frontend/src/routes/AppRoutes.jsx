@@ -16,18 +16,24 @@ import EmailVerificationPage from '../pages/EmailVerificationPage'
 import BookingPage from '../pages/BookingPage'
 import PaymentPage from '../pages/PaymentPage'
 import MyBookingsPage from '../pages/MyBookingsPage'
+import UserPaymentsPage from '../pages/UserPaymentsPage'
+import UserFavoritesPage from '../pages/UserFavoritesPage'
 import ProfilePage from '../pages/ProfilePage'
 
+// Dashboard Pages
+import AdminDashboard from '../pages/dashboard/AdminDashboard'
+import OwnerDashboard from '../pages/dashboard/OwnerDashboard'
+import UserDashboard from '../pages/dashboard/UserDashboard'
+
 // Owner Pages
-import OwnerDashboard from '../pages/OwnerDashboard'
 import OwnerCourtsPage from '../pages/OwnerCourtsPage'
 import OwnerBookingsPage from '../pages/OwnerBookingsPage'
 import OwnerProfilePage from '../pages/OwnerProfilePage'
 
 // Admin Pages
-import AdminDashboard from '../pages/AdminDashboard'
 import AdminFacilitiesPage from '../pages/AdminFacilitiesPage'
 import AdminUsersPage from '../pages/AdminUsersPage'
+import AdminAnalyticsPage from '../pages/AdminAnalyticsPage'
 import AdminProfilePage from '../pages/AdminProfilePage'
 
 const AppRoutes = () => {
@@ -36,9 +42,15 @@ const AppRoutes = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     )
+  }
+
+  // Dashboard redirect logic
+  const getDashboardRedirect = () => {
+    if (!isAuthenticated || !user?.role) return '/'
+    return `/dashboard/${user.role}`
   }
 
   return (
@@ -50,23 +62,57 @@ const AppRoutes = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/venues" element={<VenuesPage />} />
           <Route path="/venues/:id" element={<VenueDetailsPage />} />
-          
+
           {/* Auth Routes */}
-          <Route 
-            path="/login" 
+          <Route
+            path="/login"
             element={
-              isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
-            } 
+              isAuthenticated ? <Navigate to={getDashboardRedirect()} replace /> : <LoginPage />
+            }
           />
           <Route
             path="/register"
             element={
-              isAuthenticated ? <Navigate to="/" replace /> : <RegisterPage />
+              isAuthenticated ? <Navigate to={getDashboardRedirect()} replace /> : <RegisterPage />
             }
           />
           <Route
             path="/verify-email"
             element={<EmailVerificationPage />}
+          />
+
+          {/* Dashboard Routes */}
+          <Route
+            path="/dashboard/admin"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/owner"
+            element={
+              <ProtectedRoute allowedRoles={['owner']}>
+                <OwnerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/user"
+            element={
+              <ProtectedRoute allowedRoles={['user']}>
+                <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Generic dashboard redirect */}
+          <Route
+            path="/dashboard"
+            element={
+              isAuthenticated ? <Navigate to={getDashboardRedirect()} replace /> : <Navigate to="/login" replace />
+            }
           />
 
           {/* User Protected Routes */}
@@ -95,6 +141,22 @@ const AppRoutes = () => {
             }
           />
           <Route
+            path="/user/payments"
+            element={
+              <ProtectedRoute allowedRoles={['user']}>
+                <UserPaymentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/favorites"
+            element={
+              <ProtectedRoute allowedRoles={['user']}>
+                <UserFavoritesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/profile"
             element={
               <ProtectedRoute allowedRoles={['user', 'owner', 'admin']}>
@@ -104,14 +166,6 @@ const AppRoutes = () => {
           />
 
           {/* Owner Protected Routes */}
-          <Route
-            path="/owner"
-            element={
-              <ProtectedRoute allowedRoles={['owner']}>
-                <OwnerDashboard />
-              </ProtectedRoute>
-            }
-          />
           <Route
             path="/owner/courts"
             element={
@@ -139,14 +193,6 @@ const AppRoutes = () => {
 
           {/* Admin Protected Routes */}
           <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/admin/facilities"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -167,6 +213,14 @@ const AppRoutes = () => {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminAnalyticsPage />
               </ProtectedRoute>
             }
           />

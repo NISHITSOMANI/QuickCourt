@@ -1,17 +1,26 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { DashboardLoader } from '../components/LoadingSpinner'
 import toast from 'react-hot-toast'
 
-const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { isAuthenticated, user, loading } = useAuth()
+const ProtectedRoute = ({
+  children,
+  allowedRoles = [],
+  requiredPermissions = [],
+  redirectTo = null
+}) => {
+  const {
+    isAuthenticated,
+    user,
+    loading,
+    hasAnyRole,
+    hasPermission,
+    getDashboardRoute
+  } = useAuth()
   const location = useLocation()
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
-      </div>
-    )
+    return <DashboardLoader />
   }
 
   if (!isAuthenticated) {
@@ -19,9 +28,24 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
+  // Check role permissions
+  if (allowedRoles.length > 0 && !hasAnyRole(allowedRoles)) {
     toast.error('You do not have permission to access this page')
-    return <Navigate to="/" replace />
+    const fallbackRoute = redirectTo || getDashboardRoute()
+    return <Navigate to={fallbackRoute} replace />
+  }
+
+  // Check specific permissions
+  if (requiredPermissions.length > 0) {
+    const hasAllPermissions = requiredPermissions.every(permission =>
+      hasPermission(permission)
+    )
+
+    if (!hasAllPermissions) {
+      toast.error('Insufficient permissions to access this resource')
+      const fallbackRoute = redirectTo || getDashboardRoute()
+      return <Navigate to={fallbackRoute} replace />
+    }
   }
 
   return children

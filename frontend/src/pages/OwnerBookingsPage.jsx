@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { 
-  Calendar, 
-  Clock, 
+import {
+  Calendar,
+  Clock,
   DollarSign,
   User,
   MapPin,
@@ -11,8 +11,10 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react'
+import DashboardLayout from '../components/DashboardLayout'
 import { bookingApi } from '../api/bookingApi'
 import { venueApi } from '../api/venueApi'
+import { ownerApi } from '../api/dashboardApi'
 import Pagination from '../components/Pagination'
 import toast from 'react-hot-toast'
 
@@ -109,96 +111,92 @@ const OwnerBookingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Venue Bookings</h1>
-          <p className="text-gray-600 mt-2">Manage bookings for your venues</p>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Venue
-              </label>
-              <select
-                value={venueFilter}
-                onChange={(e) => setVenueFilter(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
+    <DashboardLayout
+      title="Venue Bookings"
+      subtitle="Manage bookings for your venues"
+    >
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Venue
+            </label>
+            <select
+              value={venueFilter}
+              onChange={(e) => setVenueFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
                 <option value="">All Venues</option>
-                {venues?.map((venue) => (
-                  <option key={venue._id} value={venue._id}>
-                    {venue.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              {venues?.map((venue) => (
+                <option key={venue._id} value={venue._id}>
+                  {venue.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
                 <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date From
-              </label>
-              <input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Date From
+            </label>
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
 
-            <div className="flex items-end">
-              {(statusFilter || venueFilter || dateFilter) && (
-                <button
-                  onClick={clearFilters}
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Clear Filters
-                </button>
-              )}
-            </div>
+          <div className="flex items-end">
+            {(statusFilter || venueFilter || dateFilter) && (
+              <button
+                onClick={clearFilters}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
         </div>
+      </div>
 
-        {/* Bookings List */}
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="bg-gray-200 rounded-lg h-32 animate-pulse"></div>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Error loading bookings. Please try again.</p>
-            </div>
-          ) : data?.bookings?.length === 0 ? (
-            <div className="text-center py-12">
-              <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
-              <p className="text-gray-500">No bookings match your current filters.</p>
-            </div>
-          ) : (
+      {/* Bookings List */}
+      <div className="space-y-4">
+        {isLoading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="bg-gray-200 rounded-lg h-32 animate-pulse"></div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">Error loading bookings. Please try again.</p>
+          </div>
+        ) : data?.bookings?.length === 0 ? (
+          <div className="text-center py-12">
+            <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
+            <p className="text-gray-500">No bookings match your current filters.</p>
+          </div>
+        ) : (
             <>
               {data?.bookings?.map((booking) => (
                 <div key={booking._id} className="bg-white rounded-lg shadow-md p-6">
@@ -265,21 +263,20 @@ const OwnerBookingsPage = () => {
                 </div>
               ))}
 
-              {/* Pagination */}
-              {data?.totalPages > 1 && (
-                <div className="mt-8">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={data.totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </div>
-              )}
-            </>
+          {/* Pagination */}
+          {data?.totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={data.totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
           )}
-        </div>
+        </>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
 
