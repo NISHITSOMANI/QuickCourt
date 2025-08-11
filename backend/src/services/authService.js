@@ -77,32 +77,7 @@ class AuthService {
    */
   async login(email, password, req) {
     try {
-      // Check for special admin login via env variables
-      if (
-        email === process.env.ADMIN_EMAIL &&
-        password === process.env.ADMIN_PASSWORD
-      ) {
-        // Generate tokens
-        const { accessToken, refreshToken } = this.generateTokens("admin");
-
-        // Log successful admin login
-        logBusiness("ADMIN_LOGIN", "admin", {
-          email: process.env.ADMIN_EMAIL,
-          source: req?.headers?.["user-agent"],
-        });
-
-        return {
-          user: {
-            _id: "admin", // fixed ID for in-memory admin
-            name: "System Administrator",
-            email: process.env.ADMIN_EMAIL,
-            role: "admin",
-          },
-          tokens: { accessToken, refreshToken },
-        };
-      }
-
-      // Normal user login flow
+      // Find user by email
       const user = await User.findOne({ email }).select("+password");
 
       if (!user) {
@@ -110,6 +85,7 @@ class AuthService {
         throw new AppError("Invalid email or password", 401);
       }
 
+      // Check if account is locked
       if (user.isLocked) {
         logSecurity("LOGIN_ATTEMPT_LOCKED_ACCOUNT", req, { userId: user._id });
         throw new AppError(
@@ -118,6 +94,7 @@ class AuthService {
         );
       }
 
+      // Check if account is active
       if (user.status !== "active") {
         logSecurity("LOGIN_ATTEMPT_INACTIVE_ACCOUNT", req, {
           userId: user._id,
@@ -126,6 +103,7 @@ class AuthService {
         throw new AppError("Account is suspended or banned", 403);
       }
 
+      // Verify password
       const isPasswordValid = await user.comparePassword(password);
 
       if (!isPasswordValid) {
