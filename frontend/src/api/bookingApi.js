@@ -1,4 +1,5 @@
 import api from './config'
+import { mockBookingApi, shouldUseMockApi } from './mockApi'
 
 export const bookingApi = {
   // Create new booking
@@ -7,8 +8,16 @@ export const bookingApi = {
   },
 
   // Get user's bookings
-  getMyBookings: (params = {}) => {
-    return api.get('/bookings/my', { params })
+  getMyBookings: async (params = {}) => {
+    if (shouldUseMockApi()) {
+      return await mockBookingApi.getMyBookings(params)
+    }
+    try {
+      return await api.get('/bookings/my', { params })
+    } catch (error) {
+      console.warn('API unavailable, using mock data:', error.message)
+      return await mockBookingApi.getMyBookings(params)
+    }
   },
 
   // Get booking by ID

@@ -1,4 +1,5 @@
 import api from './config'
+import { mockAuthApi, shouldUseMockApi } from './mockApi'
 
 export const authApi = {
   // Register new user
@@ -17,8 +18,16 @@ export const authApi = {
   },
 
   // Get current user
-  getMe: () => {
-    return api.get('/auth/me')
+  getMe: async () => {
+    if (shouldUseMockApi()) {
+      return await mockAuthApi.getMe()
+    }
+    try {
+      return await api.get('/auth/me')
+    } catch (error) {
+      console.warn('API unavailable, using mock data:', error.message)
+      return await mockAuthApi.getMe()
+    }
   },
 
   // Refresh token

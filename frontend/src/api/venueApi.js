@@ -1,9 +1,23 @@
 import api from './config'
+import { mockVenueApi, shouldUseMockApi } from './mockApi'
 
 export const venueApi = {
   // Get all venues with filters
-  getVenues: (params = {}) => {
-    return api.get('/venues', { params })
+  getVenues: async (params = {}) => {
+    if (shouldUseMockApi()) {
+      try {
+        return await mockVenueApi.getVenues(params)
+      } catch (error) {
+        console.warn('Using mock data due to API error:', error.message)
+        return await mockVenueApi.getVenues(params)
+      }
+    }
+    try {
+      return await api.get('/venues', { params })
+    } catch (error) {
+      console.warn('API unavailable, using mock data:', error.message)
+      return await mockVenueApi.getVenues(params)
+    }
   },
 
   // Get popular venues
@@ -12,8 +26,16 @@ export const venueApi = {
   },
 
   // Get venue by ID
-  getVenueById: (id) => {
-    return api.get(`/venues/${id}`)
+  getVenueById: async (id) => {
+    if (shouldUseMockApi()) {
+      return await mockVenueApi.getVenueById(id)
+    }
+    try {
+      return await api.get(`/venues/${id}`)
+    } catch (error) {
+      console.warn('API unavailable, using mock data:', error.message)
+      return await mockVenueApi.getVenueById(id)
+    }
   },
 
   // Create new venue (owner only)

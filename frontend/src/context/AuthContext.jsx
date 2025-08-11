@@ -57,6 +57,14 @@ const authReducer = (state, action) => {
         ...state,
         user: { ...state.user, ...action.payload },
       }
+    case 'SET_DEV_USER':
+      return {
+        ...state,
+        user: action.payload,
+        isAuthenticated: true,
+        loading: false,
+        error: null,
+      }
     default:
       return state
   }
@@ -148,7 +156,12 @@ export const AuthProvider = ({ children }) => {
   }
 
   const updateUser = (userData) => {
-    dispatch({ type: 'UPDATE_USER', payload: userData })
+    // For development: if it's a complete user object, set as dev user
+    if (userData._id && userData.role && userData.email) {
+      dispatch({ type: 'SET_DEV_USER', payload: userData })
+    } else {
+      dispatch({ type: 'UPDATE_USER', payload: userData })
+    }
   }
 
   const clearError = () => {
