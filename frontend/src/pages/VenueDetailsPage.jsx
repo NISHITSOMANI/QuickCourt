@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from 'react-query'
-import { 
-  MapPin, 
-  Star, 
-  Clock, 
-  DollarSign, 
+import {
+  MapPin,
+  Star,
+  Clock,
+  DollarSign,
   Calendar,
   Users,
   Wifi,
@@ -18,13 +18,14 @@ import {
 import { venueApi } from '../api/venueApi'
 import { useAuth } from '../context/AuthContext'
 import { useBooking } from '../context/BookingContext'
+import VenueMap from '../components/VenueMap'
 
 const VenueDetailsPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
   const { setVenue } = useBooking()
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+
 
   // Fetch venue details
   const { data: venue, isLoading, error } = useQuery(
@@ -124,11 +125,10 @@ const VenueDetailsPage = () => {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
-        className={`w-5 h-5 ${
-          index < Math.floor(rating)
-            ? 'text-yellow-400 fill-current'
-            : 'text-gray-300'
-        }`}
+        className={`w-5 h-5 ${index < Math.floor(rating)
+          ? 'text-yellow-400 fill-current'
+          : 'text-gray-300'
+          }`}
       />
     ))
   }
@@ -161,28 +161,20 @@ const VenueDetailsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Image Gallery */}
+        {/* Hero Image */}
         <div className="mb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2">
-              <img
-                src={venue.photos?.[selectedImageIndex] || '/placeholder-venue.jpg'}
-                alt={venue.name}
-                className="w-full h-96 object-cover rounded-lg"
-              />
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
-              {venue.photos?.slice(0, 4).map((photo, index) => (
-                <img
-                  key={index}
-                  src={photo}
-                  alt={`${venue.name} ${index + 1}`}
-                  className={`w-full h-44 lg:h-20 object-cover rounded-lg cursor-pointer border-2 ${
-                    selectedImageIndex === index ? 'border-blue-600' : 'border-transparent'
-                  }`}
-                  onClick={() => setSelectedImageIndex(index)}
-                />
-              ))}
+          <div className="relative h-64 md:h-80 lg:h-96 rounded-lg overflow-hidden">
+            <img
+              src={venue.images?.[0] || '/placeholder-venue.jpg'}
+              alt={venue.name}
+              className="w-full h-full object-cover"
+            />
+            {/* Overlay with venue name */}
+            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
+              <div className="p-6 text-white">
+                <h1 className="text-3xl md:text-4xl font-bold mb-2">{venue.name}</h1>
+                <p className="text-lg opacity-90">{venue.shortLocation || venue.address}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -205,7 +197,7 @@ const VenueDetailsPage = () => {
                   <span>{venue.shortLocation || venue.address}</span>
                 </div>
               </div>
-              
+
               {/* Sports Tags */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {venue.sports?.map((sport, index) => (
@@ -315,7 +307,7 @@ const VenueDetailsPage = () => {
                 </div>
                 <p className="text-sm text-gray-600">Starting from</p>
               </div>
-              
+
               <button
                 onClick={handleBookNow}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-md font-medium transition-colors"
@@ -352,6 +344,12 @@ const VenueDetailsPage = () => {
                     </span>
                   </div>
                 )}
+              </div>
+
+              {/* Venue Map */}
+              <div className="mt-6">
+                <h4 className="text-md font-medium text-gray-900 mb-3">Location</h4>
+                <VenueMap venue={venue} height="250px" />
               </div>
             </div>
           </div>

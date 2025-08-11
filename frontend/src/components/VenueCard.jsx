@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
-import { 
-  MapPin, 
-  Star, 
-  Clock, 
-  DollarSign, 
+import {
+  MapPin,
+  Star,
+  Clock,
+  DollarSign,
   Users,
   Wifi,
   Car,
@@ -18,7 +18,7 @@ const VenueCard = ({ venue, className = '' }) => {
     description,
     address,
     shortLocation,
-    photos = [],
+    images = [],
     sports = [],
     startingPrice,
     rating = 0,
@@ -49,11 +49,10 @@ const VenueCard = ({ venue, className = '' }) => {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
-        className={`w-4 h-4 ${
-          index < Math.floor(rating)
-            ? 'text-yellow-400 fill-current'
-            : 'text-gray-300'
-        }`}
+        className={`w-4 h-4 ${index < Math.floor(rating)
+          ? 'text-yellow-400 fill-current'
+          : 'text-gray-300'
+          }`}
       />
     ))
   }
@@ -62,9 +61,9 @@ const VenueCard = ({ venue, className = '' }) => {
     <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 ${className}`}>
       {/* Image */}
       <div className="relative h-48 bg-gray-200">
-        {photos.length > 0 ? (
+        {images.length > 0 ? (
           <img
-            src={photos[0]}
+            src={images[0]}
             alt={name}
             className="w-full h-full object-cover"
           />
@@ -73,7 +72,7 @@ const VenueCard = ({ venue, className = '' }) => {
             <Users className="w-12 h-12 text-gray-400" />
           </div>
         )}
-        
+
         {/* Price Badge */}
         <div className="absolute top-3 right-3 bg-white rounded-full px-3 py-1 shadow-md">
           <div className="flex items-center space-x-1">

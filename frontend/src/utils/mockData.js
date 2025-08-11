@@ -13,6 +13,10 @@ export const mockVenues = [
     reviewCount: 128,
     priceRange: '$20-50',
     amenities: ['Parking', 'Changing Rooms', 'Cafeteria'],
+    coordinates: { lat: 40.7128, lng: -74.0060 }, // New York City
+    phone: '+1 (555) 123-4567',
+    email: 'info@sportscomplex.com',
+    startingPrice: 25,
     operatingHours: {
       open: '06:00',
       close: '22:00'
@@ -46,6 +50,10 @@ export const mockVenues = [
     reviewCount: 89,
     priceRange: '$40-80',
     amenities: ['Pro Shop', 'Coaching', 'Lounge'],
+    coordinates: { lat: 40.7589, lng: -73.9851 }, // Times Square, NYC
+    phone: '+1 (555) 987-6543',
+    email: 'contact@elitetennisclub.com',
+    startingPrice: 60,
     operatingHours: {
       open: '07:00',
       close: '21:00'
@@ -72,6 +80,10 @@ export const mockVenues = [
     reviewCount: 156,
     priceRange: '$15-30',
     amenities: ['Free Parking', 'Equipment Rental'],
+    coordinates: { lat: 40.6782, lng: -73.9442 }, // Brooklyn, NYC
+    phone: '+1 (555) 456-7890',
+    email: 'info@communitysports.com',
+    startingPrice: 20,
     operatingHours: {
       open: '06:00',
       close: '23:00'
