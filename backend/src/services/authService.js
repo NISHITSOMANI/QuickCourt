@@ -77,66 +77,83 @@ class AuthService {
    */
   async login(email, password, req) {
     try {
-      // Find user and include password
-      const user = await User.findOne({ email }).select('+password');
-      
-      if (!user) {
-        logSecurity('LOGIN_ATTEMPT_INVALID_EMAIL', req, { email });
-        throw new AppError('Invalid email or password', 401);
-      }
+      // Check for special admin login via env variables
+      if (
+        email === process.env.ADMIN_EMAIL &&
+        password === process.env.ADMIN_PASSWORD
+      ) {
+        // Generate tokens
+        const { accessToken, refreshToken } = this.generateTokens("admin");
 
-      // Check if account is locked
-      if (user.isLocked) {
-        logSecurity('LOGIN_ATTEMPT_LOCKED_ACCOUNT', req, { userId: user._id });
-        throw new AppError('Account is temporarily locked due to too many failed attempts', 423);
-      }
-
-      // Check if account is active
-      if (user.status !== 'active') {
-        logSecurity('LOGIN_ATTEMPT_INACTIVE_ACCOUNT', req, { 
-          userId: user._id, 
-          status: user.status 
+        // Log successful admin login
+        logBusiness("ADMIN_LOGIN", "admin", {
+          email: process.env.ADMIN_EMAIL,
+          source: req?.headers?.["user-agent"],
         });
-        throw new AppError('Account is suspended or banned', 403);
+
+        return {
+          user: {
+            _id: "admin", // fixed ID for in-memory admin
+            name: "System Administrator",
+            email: process.env.ADMIN_EMAIL,
+            role: "admin",
+          },
+          tokens: { accessToken, refreshToken },
+        };
       }
 
-      // Verify password
+      // Normal user login flow
+      const user = await User.findOne({ email }).select("+password");
+
+      if (!user) {
+        logSecurity("LOGIN_ATTEMPT_INVALID_EMAIL", req, { email });
+        throw new AppError("Invalid email or password", 401);
+      }
+
+      if (user.isLocked) {
+        logSecurity("LOGIN_ATTEMPT_LOCKED_ACCOUNT", req, { userId: user._id });
+        throw new AppError(
+          "Account is temporarily locked due to too many failed attempts",
+          423
+        );
+      }
+
+      if (user.status !== "active") {
+        logSecurity("LOGIN_ATTEMPT_INACTIVE_ACCOUNT", req, {
+          userId: user._id,
+          status: user.status,
+        });
+        throw new AppError("Account is suspended or banned", 403);
+      }
+
       const isPasswordValid = await user.comparePassword(password);
-      
+
       if (!isPasswordValid) {
-        logSecurity('LOGIN_ATTEMPT_INVALID_PASSWORD', req, { userId: user._id });
-        
-        // Increment login attempts
+        logSecurity("LOGIN_ATTEMPT_INVALID_PASSWORD", req, { userId: user._id });
         await user.incLoginAttempts();
-        
-        throw new AppError('Invalid email or password', 401);
+        throw new AppError("Invalid email or password", 401);
       }
 
-      // Reset login attempts on successful login
       if (user.loginAttempts > 0) {
         await user.resetLoginAttempts();
       }
 
-      // Update last login
       user.lastLogin = new Date();
       await user.save();
 
-      // Generate tokens
       const { accessToken, refreshToken } = this.generateTokens(user._id);
 
-      // Store refresh token
-      const RefreshToken = require('../models/RefreshToken');
+      const RefreshToken = require("../models/RefreshToken");
       await RefreshToken.create({
         token: refreshToken,
         userId: user._id,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       });
 
-      // Log successful login
-      logBusiness('USER_LOGIN', user._id, {
+      logBusiness("USER_LOGIN", user._id, {
         email: user.email,
         lastLogin: user.lastLogin,
-        source: req?.headers?.['user-agent'],
+        source: req?.headers?.["user-agent"],
       });
 
       return {
@@ -147,6 +164,7 @@ class AuthService {
       throw error;
     }
   }
+
 
   /**
    * Refresh access token

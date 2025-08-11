@@ -2,7 +2,7 @@
 
 A modern, full-stack web application for booking sports courts and managing venues. Built with Node.js, Express, MongoDB, React, and Tailwind CSS.
 
-## 🏟️ Features
+## Features
 
 ### For Users
 - **Browse & Search**: Find sports venues by location, sport type, and availability
@@ -22,7 +22,7 @@ A modern, full-stack web application for booking sports courts and managing venu
 - **User Management**: Manage user accounts and permissions
 - **System Analytics**: Monitor platform-wide statistics
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **Node.js** - Runtime environment
