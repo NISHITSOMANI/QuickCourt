@@ -187,36 +187,39 @@ const HomePage = () => {
 
       {/* Development Quick Links */}
       {import.meta.env.DEV && (
-        <section className="py-8 bg-yellow-50 border-t border-yellow-200">
+        <section className="py-8 bg-blue-50 border-t border-blue-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h3 className="text-lg font-semibold text-yellow-800 mb-4">🚧 Development Quick Links</h3>
+            <h3 className="text-lg font-semibold text-blue-800 mb-4 flex items-center">
+              <span className="mr-2">🚧</span>
+              Development Quick Links
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <button
                 onClick={() => navigate('/my-bookings')}
-                className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-white hover:bg-blue-100 text-blue-700 border border-blue-200 hover:border-blue-300 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 My Bookings (User)
               </button>
               <button
                 onClick={() => navigate('/owner')}
-                className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-white hover:bg-blue-100 text-blue-700 border border-blue-200 hover:border-blue-300 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 Owner Dashboard
               </button>
               <button
                 onClick={() => navigate('/admin')}
-                className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-white hover:bg-blue-100 text-blue-700 border border-blue-200 hover:border-blue-300 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 Admin Dashboard
               </button>
               <button
                 onClick={() => navigate('/booking')}
-                className="bg-orange-100 hover:bg-orange-200 text-orange-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-white hover:bg-blue-100 text-blue-700 border border-blue-200 hover:border-blue-300 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 Book a Court
               </button>
             </div>
-            <p className="text-xs text-yellow-700 mt-2">
+            <p className="text-xs text-blue-600 mt-3 bg-white px-3 py-2 rounded-md border border-blue-200">
               💡 Use the "DEV: Switch User" button in the bottom-right to change user roles and access different pages.
             </p>
           </div>

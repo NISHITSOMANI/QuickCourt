@@ -56,18 +56,58 @@ const VenueDetailsPage = () => {
   )
 
   const handleBookNow = () => {
-    if (!isAuthenticated) {
-      navigate('/login', { state: { from: location } })
-      return
+    console.log('Book Now clicked - attempting to navigate to payment')
+
+    // Skip authentication checks for now to test navigation
+    // if (!isAuthenticated) {
+    //   console.log('User not authenticated, redirecting to login')
+    //   navigate('/login', { state: { from: location } })
+    //   return
+    // }
+
+    // if (user?.role !== 'user') {
+    //   toast.error('Only users can book courts')
+    //   return
+    // }
+
+    // Create simple booking data for payment
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const defaultDate = tomorrow.toISOString().split('T')[0]
+
+    const bookingData = {
+      venueId: venue?._id || 'venue-123',
+      courtId: 'court-123',
+      date: defaultDate,
+      startTime: '10:00',
+      endTime: '11:00',
+      duration: 1,
+      totalAmount: venue?.startingPrice || 50,
+      venue: {
+        _id: venue?._id || 'venue-123',
+        name: venue?.name || 'Elite Tennis Club',
+        location: venue?.shortLocation || 'Sports District'
+      },
+      court: {
+        _id: 'court-123',
+        name: 'Court 1',
+        pricePerHour: venue?.startingPrice || 50
+      },
+      timeSlot: {
+        startTime: '10:00',
+        endTime: '11:00'
+      }
     }
 
-    if (user?.role !== 'user') {
-      toast.error('Only users can book courts')
-      return
-    }
+    console.log('Attempting navigation to /payment with data:', bookingData)
 
-    setVenue(venue)
-    navigate('/booking')
+    try {
+      navigate('/payment', { state: { bookingData } })
+      console.log('Navigation command executed')
+    } catch (error) {
+      console.error('Navigation error:', error)
+      toast.error('Navigation failed: ' + error.message)
+    }
   }
 
   const getAmenityIcon = (amenity) => {
@@ -96,7 +136,7 @@ const VenueDetailsPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     )
   }
@@ -109,7 +149,7 @@ const VenueDetailsPage = () => {
           <p className="text-gray-600 mb-4">The venue you're looking for doesn't exist.</p>
           <button
             onClick={() => navigate('/venues')}
-            className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-md"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md"
           >
             Browse Venues
           </button>
@@ -138,7 +178,7 @@ const VenueDetailsPage = () => {
                   src={photo}
                   alt={`${venue.name} ${index + 1}`}
                   className={`w-full h-44 lg:h-20 object-cover rounded-lg cursor-pointer border-2 ${
-                    selectedImageIndex === index ? 'border-primary-600' : 'border-transparent'
+                    selectedImageIndex === index ? 'border-blue-600' : 'border-transparent'
                   }`}
                   onClick={() => setSelectedImageIndex(index)}
                 />
@@ -171,7 +211,7 @@ const VenueDetailsPage = () => {
                 {venue.sports?.map((sport, index) => (
                   <span
                     key={index}
-                    className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm font-medium"
+                    className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
                   >
                     {sport}
                   </span>
@@ -194,7 +234,7 @@ const VenueDetailsPage = () => {
                     const IconComponent = getAmenityIcon(amenity)
                     return (
                       <div key={index} className="flex items-center space-x-2">
-                        <IconComponent className="w-5 h-5 text-primary-600" />
+                        <IconComponent className="w-5 h-5 text-blue-600" />
                         <span className="text-gray-700 capitalize">{amenity}</span>
                       </div>
                     )
@@ -242,8 +282,8 @@ const VenueDetailsPage = () => {
                     <div key={review._id} className="bg-white rounded-lg border border-gray-200 p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                            <span className="text-primary-600 font-medium text-sm">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 font-medium text-sm">
                               {review.user?.name?.charAt(0)}
                             </span>
                           </div>
@@ -278,7 +318,7 @@ const VenueDetailsPage = () => {
               
               <button
                 onClick={handleBookNow}
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-md font-medium transition-colors"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-md font-medium transition-colors"
               >
                 Book Now
               </button>

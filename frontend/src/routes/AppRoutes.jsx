@@ -14,6 +14,7 @@ import EmailVerificationPage from '../pages/EmailVerificationPage'
 
 // User Pages
 import BookingPage from '../pages/BookingPage'
+import PaymentPage from '../pages/PaymentPage'
 import MyBookingsPage from '../pages/MyBookingsPage'
 import ProfilePage from '../pages/ProfilePage'
 
@@ -74,6 +75,14 @@ const AppRoutes = () => {
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <BookingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment"
+            element={
+              <ProtectedRoute allowedRoles={['user']}>
+                <PaymentPage />
               </ProtectedRoute>
             }
           />

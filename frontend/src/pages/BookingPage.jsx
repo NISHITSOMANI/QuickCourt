@@ -1,24 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from 'react-query'
 import { Calendar, Clock, MapPin, Users, DollarSign, ArrowLeft } from 'lucide-react'
 import { useBooking } from '../context/BookingContext'
-import { useAuth } from '../context/AuthContext'
 import { venueApi } from '../api/venueApi'
-import { bookingApi } from '../api/bookingApi'
 import toast from 'react-hot-toast'
 
 const BookingPage = () => {
   const navigate = useNavigate()
-  const { user } = useAuth()
-  const { selectedVenue, selectedCourt, setVenue, setCourt, setDate, setTimeSlot } = useBooking()
+  const { selectedVenue, selectedCourt, setVenue, setCourt } = useBooking()
   
   const [selectedVenueId, setSelectedVenueId] = useState(selectedVenue?._id || '')
   const [selectedCourtId, setSelectedCourtId] = useState(selectedCourt?._id || '')
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [duration, setDuration] = useState('1')
-  const [isLoading, setIsLoading] = useState(false)
 
   // Fetch venues
   const { data: venues } = useQuery(
@@ -75,31 +71,42 @@ const BookingPage = () => {
     return court ? court.pricePerHour * parseInt(duration) : 0
   }
 
-  const handleBooking = async () => {
+  const handleBooking = () => {
     if (!selectedVenueId || !selectedCourtId || !selectedDate || !selectedTime) {
       toast.error('Please fill in all booking details')
       return
     }
 
-    setIsLoading(true)
-    try {
-      const bookingData = {
-        venueId: selectedVenueId,
-        courtId: selectedCourtId,
-        date: selectedDate,
-        startTime: selectedTime,
-        endTime: calculateEndTime(selectedTime, duration),
-        paymentMethod: 'card'
-      }
+    // Prepare booking data for payment page
+    const venue = venues?.find(v => v._id === selectedVenueId)
+    const court = courts?.find(c => c._id === selectedCourtId)
 
-      await bookingApi.createBooking(bookingData)
-      toast.success('Booking created successfully!')
-      navigate('/my-bookings')
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Booking failed')
-    } finally {
-      setIsLoading(false)
+    const bookingData = {
+      venueId: selectedVenueId,
+      courtId: selectedCourtId,
+      date: selectedDate,
+      startTime: selectedTime,
+      endTime: calculateEndTime(selectedTime, duration),
+      duration: parseInt(duration),
+      totalAmount: calculateTotalAmount(),
+      venue: {
+        _id: venue?._id,
+        name: venue?.name,
+        location: venue?.shortLocation || venue?.address
+      },
+      court: {
+        _id: court?._id,
+        name: court?.name,
+        pricePerHour: court?.pricePerHour
+      },
+      timeSlot: {
+        startTime: selectedTime,
+        endTime: calculateEndTime(selectedTime, duration)
+      }
     }
+
+    // Navigate to payment page with booking data
+    navigate('/payment', { state: { bookingData } })
   }
 
   const today = new Date().toISOString().split('T')[0]
@@ -133,7 +140,7 @@ const BookingPage = () => {
                 <select
                   value={selectedVenueId}
                   onChange={(e) => handleVenueChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Choose a venue...</option>
                   {venues?.map((venue) => (
@@ -149,7 +156,7 @@ const BookingPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Sport
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option>Badminton</option>
                   <option>Tennis</option>
                   <option>Basketball</option>
@@ -168,7 +175,7 @@ const BookingPage = () => {
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   min={today}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -181,7 +188,7 @@ const BookingPage = () => {
                 <select
                   value={selectedTime}
                   onChange={(e) => setSelectedTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select time...</option>
                   {timeSlots.map((time) => (
@@ -200,7 +207,7 @@ const BookingPage = () => {
                 <select
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="1">1 hour</option>
                   <option value="2">2 hours</option>
@@ -219,7 +226,7 @@ const BookingPage = () => {
                   value={selectedCourtId}
                   onChange={(e) => handleCourtChange(e.target.value)}
                   disabled={!selectedVenueId}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                 >
                   <option value="">Select a court...</option>
                   {courts?.map((court) => (
@@ -273,7 +280,7 @@ const BookingPage = () => {
                 
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total Amount:</span>
-                  <span className="text-primary-600">
+                  <span className="text-blue-600">
                     <DollarSign className="w-4 h-4 inline" />
                     {calculateTotalAmount()}
                   </span>
@@ -282,21 +289,14 @@ const BookingPage = () => {
 
               <button
                 onClick={handleBooking}
-                disabled={!selectedVenueId || !selectedCourtId || !selectedDate || !selectedTime || isLoading}
+                disabled={!selectedVenueId || !selectedCourtId || !selectedDate || !selectedTime}
                 className={`w-full mt-6 py-3 px-4 rounded-md font-medium transition-colors ${
-                  selectedVenueId && selectedCourtId && selectedDate && selectedTime && !isLoading
-                    ? 'bg-primary-600 hover:bg-primary-700 text-white'
+                  selectedVenueId && selectedCourtId && selectedDate && selectedTime
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Processing...
-                  </div>
-                ) : (
-                  'Continue to Payment'
-                )}
+                Continue to Payment
               </button>
             </div>
           </div>

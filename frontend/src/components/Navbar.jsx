@@ -70,7 +70,7 @@ const Navbar = () => {
           {/* Logo and brand */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">Q</span>
               </div>
               <span className="text-xl font-bold text-gray-900">QuickCourt</span>
@@ -92,13 +92,23 @@ const Navbar = () => {
             <Link
               to="/venues"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/venues') 
-                  ? 'text-primary-600 bg-primary-50' 
-                  : 'text-gray-700 hover:text-primary-600'
+                isActive('/venues')
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-700 hover:text-blue-600'
               }`}
             >
               Find Courts
             </Link>
+
+            {/* Temporary test link for payment page */}
+            {import.meta.env.DEV && (
+              <Link
+                to="/payment"
+                className="px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:text-red-700 border border-red-300 hover:border-red-400"
+              >
+                🧪 Test Payment
+              </Link>
+            )}
 
             {isAuthenticated ? (
               <div className="relative">
