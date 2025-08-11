@@ -1,0 +1,145 @@
+quickcourt/
+├── backend/                          # Node.js + Express + MongoDB API
+│   ├── src/
+│   │   ├── config/
+│   │   │   ├── db.js
+│   │   │   ├── env.js
+│   │   │   └── logger.js
+│   │   │
+│   │   ├── middleware/
+│   │   │   ├── authMiddleware.js
+│   │   │   ├── errorHandler.js
+│   │   │   ├── uploadMiddleware.js
+│   │   │   └── validateRequest.js
+│   │   │
+│   │   ├── models/
+│   │   │   ├── User.js
+│   │   │   ├── Venue.js
+│   │   │   ├── Court.js
+│   │   │   ├── Booking.js
+│   │   │   ├── Review.js
+│   │   │   └── Notification.js
+│   │   │
+│   │   ├── controllers/
+│   │   │   ├── authController.js
+│   │   │   ├── venueController.js
+│   │   │   ├── bookingController.js
+│   │   │   ├── profileController.js
+│   │   │   ├── adminController.js
+│   │   │   └── ownerController.js
+│   │   │
+│   │   ├── routes/
+│   │   │   ├── authRoutes.js
+│   │   │   ├── venueRoutes.js
+│   │   │   ├── bookingRoutes.js
+│   │   │   ├── profileRoutes.js
+│   │   │   ├── adminRoutes.js
+│   │   │   └── ownerRoutes.js
+│   │   │
+│   │   ├── utils/
+│   │   │   ├── sendEmail.js
+│   │   │   ├── chartUtils.js
+│   │   │   ├── paymentSimulator.js
+│   │   │   └── dateUtils.js
+│   │   │
+│   │   ├── seed/
+│   │   │   ├── seedVenues.js
+│   │   │   ├── seedUsers.js
+│   │   │   └── seedBookings.js
+│   │   │
+│   │   ├── tests/
+│   │   │   ├── auth.test.js
+│   │   │   ├── venue.test.js
+│   │   │   └── booking.test.js
+│   │   │
+│   │   ├── app.js
+│   │   └── server.js
+│   │
+│   ├── .env
+│   ├── package.json
+│   └── README.md
+│
+├── frontend/                        # React + Vite App
+│   ├── public/
+│   │   ├── index.html
+│   │   ├── favicon.ico
+│   │   ├── logo192.png
+│   │   ├── logo512.png
+│   │   └── manifest.json
+│   │
+│   ├── src/
+│   │   ├── api/
+│   │   │   ├── authApi.js
+│   │   │   ├── venueApi.js
+│   │   │   ├── bookingApi.js
+│   │   │   ├── profileApi.js
+│   │   │   ├── adminApi.js
+│   │   │   └── ownerApi.js
+│   │   │
+│   │   ├── assets/
+│   │   │   ├── logo.png
+│   │   │   ├── banners/
+│   │   │   └── icons/
+│   │   │
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── Footer.jsx
+│   │   │   ├── VenueCard.jsx
+│   │   │   ├── BookingCard.jsx
+│   │   │   ├── SearchBar.jsx
+│   │   │   ├── FilterPanel.jsx
+│   │   │   ├── Pagination.jsx
+│   │   │   └── Charts/
+│   │   │       ├── BookingTrendsChart.jsx
+│   │   │       ├── EarningsChart.jsx
+│   │   │       ├── PeakHoursHeatmap.jsx
+│   │   │       └── UserTrendsChart.jsx
+│   │   │
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx
+│   │   │   └── BookingContext.jsx
+│   │   │
+│   │   ├── hooks/
+│   │   │   ├── useAuth.js
+│   │   │   ├── useFetch.js
+│   │   │   └── usePagination.js
+│   │   │
+│   │   ├── pages/
+│   │   │   ├── HomePage.jsx
+│   │   │   ├── VenuesPage.jsx
+│   │   │   ├── VenueDetailsPage.jsx
+│   │   │   ├── BookingPage.jsx
+│   │   │   ├── MyBookingsPage.jsx
+│   │   │   ├── ProfilePage.jsx
+│   │   │   ├── OwnerDashboard.jsx
+│   │   │   ├── OwnerCourtsPage.jsx
+│   │   │   ├── OwnerBookingsPage.jsx
+│   │   │   ├── OwnerProfilePage.jsx
+│   │   │   ├── AdminDashboard.jsx
+│   │   │   ├── AdminFacilitiesPage.jsx
+│   │   │   ├── AdminUsersPage.jsx
+│   │   │   ├── AdminProfilePage.jsx
+│   │   │   ├── LoginPage.jsx
+│   │   │   └── RegisterPage.jsx
+│   │   │
+│   │   ├── routes/
+│   │   │   ├── AppRoutes.jsx
+│   │   │   └── ProtectedRoute.jsx
+│   │   │
+│   │   ├── styles/
+│   │   │   ├── globals.css
+│   │   │   ├── variables.css
+│   │   │   └── components.css
+│   │   │
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── vite.config.js
+│   │
+│   ├── package.json
+│   └── README.md
+│
+├── node_modules/                     # Root node_modules for shared deps
+├── package.json                       # Monorepo root scripts/workspaces
+├── package-lock.json
+├── README.md
+└── .gitignore
