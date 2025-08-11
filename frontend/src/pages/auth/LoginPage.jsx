@@ -94,6 +94,33 @@ const LoginPage = () => {
               )}
             </div>
 
+            {/* Account Type */}
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                Account Type
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <UserCheck className="h-5 w-5 text-gray-400" />
+                </div>
+                <select
+                  {...register('role', { required: 'Please select an account type' })}
+                  className={`
+                    block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm
+                    focus:outline-none focus:ring-primary-500 focus:border-primary-500
+                    ${errors.role ? 'border-red-300' : 'border-gray-300'}
+                  `}
+                >
+                  <option value="user">Player - Book courts and play</option>
+                  <option value="owner">Venue Owner - List and manage venues</option>
+                  <option value="admin">Administrator - Manage platform</option>
+                </select>
+              </div>
+              {errors.role && (
+                <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
+              )}
+            </div>
+
             {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">

@@ -217,41 +217,37 @@ class AuthService {
   async forgotPassword(email, req) {
     try {
       const user = await User.findOne({ email });
-      
-      if (!user) {
-        // Don't reveal if user exists or not
+
+      // 1. Check if user exists and is not an admin
+      if (!user || user.role === 'admin') {
+        // Security: Don't reveal that the user does not exist or is an admin.
+        // Log the attempt for security monitoring.
+        logSecurity('PASSWORD_RESET_ATTEMPT_NONEXISTENT_OR_ADMIN', req, { email });
         return { message: 'If an account with that email exists, a password reset link has been sent.' };
       }
 
-      // Generate reset token
-      const resetToken = crypto.randomBytes(32).toString('hex');
-      const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+      // 2. Generate reset token using the model method
+      const resetToken = user.generatePasswordResetToken();
+      await user.save({ validateBeforeSave: false }); // Skip validation to save token fields
 
-      // Save hashed token to user
-      user.passwordResetToken = hashedToken;
-      user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      await user.save();
+      // 3. Create reset URL (pointing to a frontend route)
+      // The frontend will handle the /reset-password/:token route
+      const resetUrl = `${config.frontend.url}/reset-password/${resetToken}`;
 
-      // Send reset email
-      const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/reset-password?token=${resetToken}`;
-      
+      // 4. Send email
       try {
         await emailService.sendPasswordResetEmail(user.email, user.name, resetUrl);
-        
-        logBusiness('PASSWORD_RESET_REQUESTED', user._id, {
-          email: user.email,
-          source: req?.headers?.['user-agent'],
-        });
+        logBusiness('PASSWORD_RESET_REQUESTED', user._id, { email: user.email });
       } catch (emailError) {
-        // Reset the token fields if email fails
+        // If email fails, clear the reset token fields to allow a new request
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
-        await user.save();
-        
-        throw new AppError('Failed to send password reset email', 500);
+        await user.save({ validateBeforeSave: false });
+
+        throw new AppError('Failed to send password reset email. Please try again later.', 500);
       }
 
-      return { message: 'Password reset link sent to your email' };
+      return { message: 'Password reset link sent to your email.' };
     } catch (error) {
       throw error;
     }
@@ -262,34 +258,37 @@ class AuthService {
    */
   async resetPassword(token, newPassword) {
     try {
-      // Hash the token to compare with stored hash
-      const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+      // 1. Hash the incoming token to find the user
+      const hashedToken = crypto
+        .createHash('sha256')
+        .update(token)
+        .digest('hex');
 
-      // Find user with valid reset token
+      // 2. Find user by token and check expiration
       const user = await User.findOne({
         passwordResetToken: hashedToken,
-        passwordResetExpires: { $gt: Date.now() },
+        passwordResetExpires: { $gt: Date.now() }, // Check if the token is not expired
       });
 
       if (!user) {
-        throw new AppError('Invalid or expired reset token', 400);
+        throw new AppError('Password reset token is invalid or has expired.', 400);
       }
 
-      // Update password
+      // 3. Set the new password
       user.password = newPassword;
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
+
+      // The 'pre-save' middleware on the User model will automatically hash the password
       await user.save();
 
-      // Invalidate all refresh tokens for this user
+      // 4. Invalidate all existing refresh tokens for this user for security
       const RefreshToken = require('../models/RefreshToken');
       await RefreshToken.deleteMany({ userId: user._id });
 
-      logBusiness('PASSWORD_RESET_COMPLETED', user._id, {
-        email: user.email,
-      });
+      logBusiness('PASSWORD_RESET_COMPLETED', user._id, { email: user.email });
 
-      return { message: 'Password reset successful' };
+      return { message: 'Your password has been reset successfully. Please log in with your new password.' };
     } catch (error) {
       throw error;
     }
@@ -336,6 +335,42 @@ class AuthService {
       logBusiness('PROFILE_UPDATED', userId, { updates: Object.keys(updates) });
 
       return user.toJSON();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Change password for an authenticated user
+   */
+  async changePassword(userId, currentPassword, newPassword, req) {
+    try {
+      // 1. Find user and select the password field
+      const user = await User.findById(userId).select('+password');
+
+      if (!user) {
+        // This should not happen if the user is authenticated, but as a safeguard
+        throw new AppError('User not found.', 404);
+      }
+
+      // 2. Verify the current password
+      const isMatch = await user.comparePassword(currentPassword);
+      if (!isMatch) {
+        logSecurity('PASSWORD_CHANGE_INVALID_CURRENT', req, { userId });
+        throw new AppError('Your current password is incorrect.', 401);
+      }
+
+      // 3. Set the new password
+      user.password = newPassword;
+      await user.save();
+
+      // 4. Invalidate all refresh tokens for this user
+      const RefreshToken = require('../models/RefreshToken');
+      await RefreshToken.deleteMany({ userId: user._id });
+
+      logBusiness('PASSWORD_CHANGE_COMPLETED', userId, { email: user.email });
+
+      return { message: 'Password changed successfully. Please log in again with your new password.' };
     } catch (error) {
       throw error;
     }
