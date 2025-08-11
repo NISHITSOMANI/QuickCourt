@@ -7,12 +7,13 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const path = require('path');
+const fs = require('fs');
 
 const config = require('./config/env');
-const logger = require('./config/logger');
-const { connectDB } = require('./config/db');
+const { logger, httpLogger } = require('./config/logger');
+// Note: DB connect is handled in server.js
 const routes = require('./routes');
-const { errorHandler, notFound } = require('./middleware/errorHandler');
+const { globalErrorHandler, notFound } = require('./middleware/errorHandler');
 
 // Create Express app
 const app = express();
@@ -33,19 +34,37 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration
+// Defensive CORS configuration (won't throw if config missing)
+const allowedOriginsRaw = (config.cors && config.cors.allowedOrigins) ? String(config.cors.allowedOrigins) : '';
+const allowedOrigins = allowedOriginsRaw
+  ? allowedOriginsRaw.split(',').map(s => s.trim()).filter(Boolean)
+  : [];
+
+if (allowedOrigins.length === 0) {
+  logger.warn('CORS: no allowed origins configured (config.cors.allowedOrigins is empty). Allowing requests with no origin (Postman/server).');
+}
+
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
+  origin: (origin, callback) => {
+    // Allow requests with no origin (Postman, curl, server-to-server, native apps)
     if (!origin) return callback(null, true);
-    
-    const allowedOrigins = config.cors.allowedOrigins.split(',').map(o => o.trim());
-    
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+
+    // Always allow localhost & 127.0.0.1 in dev
+    if (
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1')
+    ) {
+      return callback(null, true);
     }
+
+    // Allow wildcard if configured
+    if (allowedOrigins.includes('*')) return callback(null, true);
+
+    // Exact match
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+
+    // Not allowed
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -53,10 +72,11 @@ const corsOptions = {
   exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
 };
 
+
 app.use(cors(corsOptions));
 
 // Request logging middleware
-app.use(logger.httpLogger);
+app.use(httpLogger);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -88,23 +108,43 @@ const globalLimiter = rateLimit({
 
 app.use(globalLimiter);
 
+// Ignore favicon requests (API only app)
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // Static file serving for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Optional safe Swagger/OpenAPI documentation (development only)
+const NODE_ENV = config.nodeEnv || process.env.NODE_ENV || 'development';
+if (NODE_ENV === 'development') {
+  try {
+    let swaggerUi;
+    try {
+      swaggerUi = require('swagger-ui-express');
+    } catch (e) {
+      logger.info('swagger-ui-express not installed; skipping /api-docs mount.');
+    }
+
+    const openapiPath = path.join(__dirname, '..', 'openapi.json');
+    if (swaggerUi && fs.existsSync(openapiPath)) {
+      const swaggerDocument = require(openapiPath);
+      app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+        explorer: true,
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'QuickCourt API Documentation',
+      }));
+      app.locals.swaggerMounted = true;
+      logger.info('Swagger UI mounted at /api-docs');
+    } else if (swaggerUi) {
+      logger.info('openapi.json not found; skipping /api-docs mount.');
+    }
+  } catch (err) {
+    logger.error({ err }, 'Failed to mount Swagger UI; continuing without /api-docs');
+  }
+}
+
 // API routes
 app.use('/api/v1', routes);
-
-// Swagger/OpenAPI documentation (if in development)
-if (config.nodeEnv === 'development') {
-  const swaggerUi = require('swagger-ui-express');
-  const swaggerDocument = require('../openapi.json');
-  
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
-    explorer: true,
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'QuickCourt API Documentation',
-  }));
-}
 
 // Metrics endpoint (for monitoring)
 app.get('/metrics', (req, res) => {
@@ -124,28 +164,8 @@ app.get('/metrics', (req, res) => {
 app.use(notFound);
 
 // Global error handler
-app.use(errorHandler);
+app.use(globalErrorHandler);
 
-// Graceful shutdown handler
-const gracefulShutdown = (signal) => {
-  logger.info(`Received ${signal}. Starting graceful shutdown...`);
-  
-  process.exit(0);
-};
-
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-// Unhandled promise rejection handler
-process.on('unhandledRejection', (err) => {
-  logger.error('Unhandled Promise Rejection:', err);
-  process.exit(1);
-});
-
-// Uncaught exception handler
-process.on('uncaughtException', (err) => {
-  logger.error('Uncaught Exception:', err);
-  process.exit(1);
-});
+// NOTE: graceful shutdown should be implemented in server.js (not app.js)
 
 module.exports = app;

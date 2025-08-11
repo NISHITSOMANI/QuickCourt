@@ -1,26 +1,16 @@
-const LRU = require('lru-cache');
+const { LRUCache } = require('lru-cache');
 const config = require('./env');
-const logger = require('./logger').logger;
+const { logger } = require('./logger');
 
-/**
- * Cache abstraction layer using LRU cache (in-memory)
- * TODO: Replace with Redis for production scaling
- * 
- * Migration notes:
- * 1. Replace LRU with redis client
- * 2. Update get/set/del methods to use Redis commands
- * 3. Add connection pooling and error handling
- * 4. Consider using Redis Cluster for high availability
- */
 class CacheService {
   constructor() {
-    this.cache = new LRU({
+    this.cache = new LRUCache({
       max: config.cache.maxSize,
-      ttl: config.cache.ttlSeconds * 1000, // Convert to milliseconds
+      ttl: config.cache.ttlSeconds * 1000,
       updateAgeOnGet: false,
       updateAgeOnHas: false,
     });
-    
+
     this.stats = {
       hits: 0,
       misses: 0,
@@ -42,7 +32,7 @@ class CacheService {
         logger.debug(`Cache hit for key: ${key}`);
         return value;
       }
-      
+
       this.stats.misses++;
       logger.debug(`Cache miss for key: ${key}`);
       return null;
@@ -58,7 +48,7 @@ class CacheService {
       if (ttl) {
         options.ttl = ttl * 1000; // Convert to milliseconds
       }
-      
+
       this.cache.set(key, value, options);
       this.stats.sets++;
       logger.debug(`Cache set for key: ${key}`, { ttl });
@@ -115,17 +105,17 @@ class CacheService {
   async getOrSet(key, fetchFunction, ttl = null) {
     try {
       let value = await this.get(key);
-      
+
       if (value !== null) {
         return value;
       }
 
       value = await fetchFunction();
-      
+
       if (value !== null && value !== undefined) {
         await this.set(key, value, ttl);
       }
-      
+
       return value;
     } catch (error) {
       logger.error('Cache getOrSet error:', error);
@@ -137,11 +127,11 @@ class CacheService {
     try {
       const testKey = 'health-check';
       const testValue = Date.now();
-      
+
       this.cache.set(testKey, testValue);
       const retrieved = this.cache.get(testKey);
       this.cache.delete(testKey);
-      
+
       return {
         status: retrieved === testValue ? 'healthy' : 'unhealthy',
         stats: this.getStats(),

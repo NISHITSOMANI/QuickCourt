@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const config = require('./env');
-const logger = require('./logger');
+const { logger } = require('./logger');
 
 class Database {
   constructor() {
@@ -21,7 +21,6 @@ class Database {
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
-        bufferMaxEntries: 0,
         bufferCommands: false,
       };
 

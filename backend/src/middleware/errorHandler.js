@@ -7,7 +7,7 @@ const config = require('../config/env');
 class AppError extends Error {
   constructor(message, statusCode, isOperational = true) {
     super(message);
-    this.statusCode = statusCode;
+    this.statusCode = statusCode || 500;
     this.isOperational = isOperational;
     this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
 
@@ -16,34 +16,21 @@ class AppError extends Error {
 }
 
 /**
- * Handle MongoDB cast errors
+ * MongoDB Error Handlers
  */
-const handleCastErrorDB = (err) => {
-  const message = `Invalid ${err.path}: ${err.value}`;
-  return new AppError(message, 400);
-};
+const handleCastErrorDB = (err) =>
+  new AppError(`Invalid ${err.path}: ${err.value}`, 400);
 
-/**
- * Handle MongoDB duplicate field errors
- */
 const handleDuplicateFieldsDB = (err) => {
-  const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
-  const message = `Duplicate field value: ${value}. Please use another value!`;
-  return new AppError(message, 400);
+  const value = err.errmsg?.match(/(["'])(\\?.)*?\1/)?.[0] || 'duplicate value';
+  return new AppError(`Duplicate field value: ${value}. Please use another value!`, 400);
 };
 
-/**
- * Handle MongoDB validation errors
- */
 const handleValidationErrorDB = (err) => {
-  const errors = Object.values(err.errors).map(el => el.message);
-  const message = `Invalid input data. ${errors.join('. ')}`;
-  return new AppError(message, 400);
+  const errors = Object.values(err.errors).map((el) => el.message);
+  return new AppError(`Invalid input data. ${errors.join('. ')}`, 400);
 };
 
-/**
- * Handle JWT errors
- */
 const handleJWTError = () =>
   new AppError('Invalid token. Please log in again!', 401);
 
@@ -54,24 +41,12 @@ const handleJWTExpiredError = () =>
  * Send error response for development
  */
 const sendErrorDev = (err, req, res) => {
-  // Log error for development
   logError(err, req);
-
-  // API
-  if (req.originalUrl.startsWith('/api')) {
-    return res.status(err.statusCode).json({
-      success: false,
-      error: err,
-      message: err.message,
-      stack: err.stack,
-    });
-  }
-
-  // Rendered website
-  console.error('ERROR ', err);
-  return res.status(err.statusCode).render('error', {
-    title: 'Something went wrong!',
-    msg: err.message,
+  res.status(err.statusCode || 500).json({
+    success: false,
+    error: err,
+    message: err.message,
+    stack: err.stack,
   });
 };
 
@@ -79,37 +54,19 @@ const sendErrorDev = (err, req, res) => {
  * Send error response for production
  */
 const sendErrorProd = (err, req, res) => {
-  // API
-  if (req.originalUrl.startsWith('/api')) {
-    // Operational, trusted error: send message to client
-    if (err.isOperational) {
-      return res.status(err.statusCode).json({
-        success: false,
-        message: err.message,
-      });
-    }
-    
-    // Programming or other unknown error: don't leak error details
-    logError(err, req);
-    return res.status(500).json({
+  // Operational, trusted error
+  if (err.isOperational) {
+    return res.status(err.statusCode || 500).json({
       success: false,
-      message: 'Something went wrong!',
+      message: err.message,
     });
   }
 
-  // Rendered website
-  if (err.isOperational) {
-    return res.status(err.statusCode).render('error', {
-      title: 'Something went wrong!',
-      msg: err.message,
-    });
-  }
-  
-  // Programming or other unknown error: don't leak error details
-  console.error('ERROR ', err);
-  return res.status(err.statusCode).render('error', {
-    title: 'Something went wrong!',
-    msg: 'Please try again later.',
+  // Programming or unknown error
+  logError(err, req);
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong!',
   });
 };
 
@@ -123,8 +80,7 @@ const globalErrorHandler = (err, req, res, next) => {
   if (config.env === 'development') {
     sendErrorDev(err, req, res);
   } else {
-    let error = { ...err };
-    error.message = err.message;
+    let error = { ...err, message: err.message };
 
     if (error.name === 'CastError') error = handleCastErrorDB(error);
     if (error.code === 11000) error = handleDuplicateFieldsDB(error);
@@ -137,20 +93,17 @@ const globalErrorHandler = (err, req, res, next) => {
 };
 
 /**
- * Handle async errors
+ * Catch async errors
  */
-const catchAsync = (fn) => {
-  return (req, res, next) => {
-    fn(req, res, next).catch(next);
-  };
+const catchAsync = (fn) => (req, res, next) => {
+  fn(req, res, next).catch(next);
 };
 
 /**
  * Handle 404 errors
  */
 const notFound = (req, res, next) => {
-  const err = new AppError(`Can't find ${req.originalUrl} on this server!`, 404);
-  next(err);
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 };
 
 /**
@@ -158,11 +111,8 @@ const notFound = (req, res, next) => {
  */
 const handleValidationError = (error) => {
   if (error.details) {
-    const message = error.details.map(detail => detail.message).join(', ');
-    return res.status(400).json({
-      success: false,
-      message: `Validation error: ${message}`,
-    });
+    const message = error.details.map((detail) => detail.message).join(', ');
+    return new AppError(`Validation error: ${message}`, 400);
   }
   return error;
 };
