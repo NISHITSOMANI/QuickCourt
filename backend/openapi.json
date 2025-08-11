@@ -136,6 +136,138 @@
         }
       }
     },
+    "/auth/forgot-password": {
+      "post": {
+        "summary": "Request Password Reset",
+        "description": "Sends a password reset link to the user's email if the account exists and is not an admin account.",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset link sent successfully (or message indicating so for security).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid email format.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "summary": "Reset Password",
+        "description": "Resets the user's password using a valid token.",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password has been reset successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Token is invalid, expired, or passwords do not match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/change-password": {
+      "post": {
+        "summary": "Change Password",
+        "description": "Allows an authenticated user to change their password.",
+        "tags": ["Authentication"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "New passwords do not match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Current password is incorrect or user is not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/venues": {
       "get": {
         "summary": "Get venues",
@@ -2894,6 +3026,75 @@
       }
     },
     "schemas": {
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@example.com"
+          }
+        },
+        "required": ["email"]
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The password reset token from the email link."
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 6,
+            "example": "newSecurePassword123"
+          },
+          "confirmPassword": {
+            "type": "string",
+            "format": "password",
+            "minLength": 6,
+            "example": "newSecurePassword123"
+          }
+        },
+        "required": ["token", "password", "confirmPassword"]
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "format": "password",
+            "example": "currentPassword123"
+          },
+          "newPassword": {
+            "type": "string",
+            "format": "password",
+            "minLength": 6,
+            "example": "newSecurePassword123"
+          },
+          "confirmPassword": {
+            "type": "string",
+            "format": "password",
+            "minLength": 6,
+            "example": "newSecurePassword123"
+          }
+        },
+        "required": ["currentPassword", "newPassword", "confirmPassword"]
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Operation completed successfully."
+          }
+        }
+      },
       "HealthResponse": {
         "type": "object",
         "properties": {

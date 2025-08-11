@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -130,6 +131,23 @@ userSchema.methods.resetLoginAttempts = function() {
   return this.updateOne({
     $unset: { loginAttempts: 1, lockUntil: 1 }
   });
+};
+
+// Method to generate password reset token
+userSchema.methods.generatePasswordResetToken = function() {
+  // Generate token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  // Hash token and set to passwordResetToken field
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  // Set expire
+  this.passwordResetExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+  return resetToken;
 };
 
 module.exports = mongoose.model('User', userSchema);

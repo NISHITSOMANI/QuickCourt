@@ -129,8 +129,14 @@ const forgotPassword = catchAsync(async (req, res) => {
  * Reset password
  */
 const resetPassword = catchAsync(async (req, res) => {
-  const { token, password } = req.body;
-  
+  const { token, password, confirmPassword } = req.body;
+
+  // 1. Validate that passwords match
+  if (password !== confirmPassword) {
+    throw new AppError('Passwords do not match.', 400);
+  }
+
+  // 2. The token from the request body is the raw token sent to the user's email
   const result = await authService.resetPassword(token, password);
 
   res.status(200).json({
@@ -156,29 +162,26 @@ const updateProfile = catchAsync(async (req, res) => {
  * Change password
  */
 const changePassword = catchAsync(async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  
-  // Verify current password
-  const isCurrentPasswordValid = await req.user.comparePassword(currentPassword);
-  if (!isCurrentPasswordValid) {
-    logSecurity('PASSWORD_CHANGE_INVALID_CURRENT', req, { userId: req.user._id });
-    return res.status(400).json({
-      success: false,
-      message: 'Current password is incorrect',
-    });
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  // 1. Validate that new passwords match
+  if (newPassword !== confirmPassword) {
+    throw new AppError('New passwords do not match.', 400);
   }
 
-  // Update password
-  req.user.password = newPassword;
-  await req.user.save();
+  const result = await authService.changePassword(
+    req.user._id,
+    currentPassword,
+    newPassword,
+    req
+  );
 
-  // Invalidate all refresh tokens
-  const RefreshToken = require('../models/RefreshToken');
-  await RefreshToken.deleteMany({ userId: req.user._id });
+  // Clear the refresh token cookie upon successful password change
+  res.clearCookie('refreshToken');
 
   res.status(200).json({
     success: true,
-    message: 'Password changed successfully. Please login again.',
+    message: result.message,
   });
 });
 
