@@ -10,7 +10,7 @@ const RegisterPage = () => {
   const { register: registerUser, loading, error, clearError } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  
+
   const defaultRole = searchParams.get('role') || 'user'
 
   const {
@@ -34,7 +34,7 @@ const RegisterPage = () => {
     const { confirmPassword, ...userData } = data
     const result = await registerUser(userData)
     if (result.success) {
-      navigate('/')
+      navigate('/home')
     }
   }
 
@@ -278,8 +278,8 @@ const RegisterPage = () => {
                 group relative w-full flex justify-center py-2 px-4 border border-transparent 
                 text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 
                 focus:ring-offset-2 focus:ring-primary-500 transition-colors
-                ${loading 
-                  ? 'bg-gray-400 cursor-not-allowed' 
+                ${loading
+                  ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-primary-600 hover:bg-primary-700'
                 }
               `}

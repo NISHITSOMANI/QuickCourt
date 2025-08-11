@@ -31,9 +31,11 @@ const Navbar = () => {
   const getUserDashboardLink = () => {
     switch (user?.role) {
       case 'admin':
-        return '/admin'
+        return '/dashboard/admin'
       case 'owner':
-        return '/owner'
+        return '/dashboard/owner'
+      case 'user':
+        return '/dashboard/user'
       default:
         return '/profile'
     }
@@ -41,20 +43,19 @@ const Navbar = () => {
 
   const getUserMenuItems = () => {
     const baseItems = [
+      { icon: BarChart3, label: 'Dashboard', path: getUserDashboardLink() },
       { icon: User, label: 'Profile', path: '/profile' },
     ]
 
     if (user?.role === 'user') {
-      baseItems.unshift({ icon: Calendar, label: 'My Bookings', path: '/my-bookings' })
+      baseItems.splice(1, 0, { icon: Calendar, label: 'My Bookings', path: '/my-bookings' })
     } else if (user?.role === 'owner') {
-      baseItems.unshift(
-        { icon: BarChart3, label: 'Dashboard', path: '/owner' },
+      baseItems.splice(1, 0,
         { icon: Building2, label: 'My Courts', path: '/owner/courts' },
         { icon: Calendar, label: 'Bookings', path: '/owner/bookings' }
       )
     } else if (user?.role === 'admin') {
-      baseItems.unshift(
-        { icon: Shield, label: 'Admin Panel', path: '/admin' },
+      baseItems.splice(1, 0,
         { icon: Building2, label: 'Facilities', path: '/admin/facilities' },
         { icon: User, label: 'Users', path: '/admin/users' }
       )

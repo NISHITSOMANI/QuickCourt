@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { 
-  Building2, 
-  MapPin, 
-  Star, 
-  CheckCircle, 
+import {
+  Building2,
+  MapPin,
+  Star,
+  CheckCircle,
   XCircle,
   Eye,
   Filter,
   Search
 } from 'lucide-react'
+import DashboardLayout from '../components/DashboardLayout'
 import { venueApi } from '../api/venueApi'
+import { adminApi } from '../api/dashboardApi'
 import Pagination from '../components/Pagination'
 import toast from 'react-hot-toast'
 
@@ -79,13 +81,10 @@ const AdminFacilitiesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Facility Management</h1>
-          <p className="text-gray-600 mt-2">Review and manage venue applications and listings</p>
-        </div>
+    <DashboardLayout
+      title="Facility Management"
+      subtitle="Review and manage venue applications and listings"
+    >
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -264,8 +263,7 @@ const AdminFacilitiesPage = () => {
             </>
           )}
         </div>
-      </div>
-    </div>
+    </DashboardLayout>
   )
 }
 

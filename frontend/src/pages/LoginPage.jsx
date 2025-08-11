@@ -11,7 +11,7 @@ const LoginPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const from = location.state?.from || '/'
+  const from = location.state?.from || '/home'
   const bookingAction = location.state?.action === 'booking'
   const venue = location.state?.venue
 

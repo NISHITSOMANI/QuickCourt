@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
 // Public Pages
+import LandingPage from '../pages/LandingPage'
 import HomePage from '../pages/HomePage'
 import VenuesPage from '../pages/VenuesPage'
 import VenueDetailsPage from '../pages/VenueDetailsPage'
@@ -16,18 +17,24 @@ import EmailVerificationPage from '../pages/EmailVerificationPage'
 import BookingPage from '../pages/BookingPage'
 import PaymentPage from '../pages/PaymentPage'
 import MyBookingsPage from '../pages/MyBookingsPage'
+import UserPaymentsPage from '../pages/UserPaymentsPage'
+import UserFavoritesPage from '../pages/UserFavoritesPage'
 import ProfilePage from '../pages/ProfilePage'
 
+// Dashboard Pages
+import AdminDashboard from '../pages/dashboard/AdminDashboard'
+import OwnerDashboard from '../pages/dashboard/OwnerDashboard'
+import UserDashboard from '../pages/dashboard/UserDashboard'
+
 // Owner Pages
-import OwnerDashboard from '../pages/OwnerDashboard'
 import OwnerCourtsPage from '../pages/OwnerCourtsPage'
 import OwnerBookingsPage from '../pages/OwnerBookingsPage'
 import OwnerProfilePage from '../pages/OwnerProfilePage'
 
 // Admin Pages
-import AdminDashboard from '../pages/AdminDashboard'
 import AdminFacilitiesPage from '../pages/AdminFacilitiesPage'
 import AdminUsersPage from '../pages/AdminUsersPage'
+import AdminAnalyticsPage from '../pages/AdminAnalyticsPage'
 import AdminProfilePage from '../pages/AdminProfilePage'
 
 const AppRoutes = () => {
@@ -36,147 +43,166 @@ const AppRoutes = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     )
   }
 
+  // Dashboard redirect logic
+  const getDashboardRedirect = () => {
+    if (!isAuthenticated || !user?.role) return '/'
+    return `/dashboard/${user.role}`
+  }
+
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen">
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/venues" element={<VenuesPage />} />
-          <Route path="/venues/:id" element={<VenueDetailsPage />} />
-          
-          {/* Auth Routes */}
-          <Route 
-            path="/login" 
-            element={
-              isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
-            } 
-          />
-          <Route
-            path="/register"
-            element={
-              isAuthenticated ? <Navigate to="/" replace /> : <RegisterPage />
-            }
-          />
-          <Route
-            path="/verify-email"
-            element={<EmailVerificationPage />}
-          />
+    <Routes>
+      {/* Landing Page - No Navbar */}
+      <Route
+        path="/"
+        element={
+          isAuthenticated ? <Navigate to="/home" replace /> : <LandingPage />
+        }
+      />
 
-          {/* User Protected Routes */}
-          <Route
-            path="/booking"
-            element={
-              <ProtectedRoute allowedRoles={['user']}>
-                <BookingPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/payment"
-            element={
-              <ProtectedRoute allowedRoles={['user']}>
-                <PaymentPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/my-bookings"
-            element={
-              <ProtectedRoute allowedRoles={['user']}>
-                <MyBookingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute allowedRoles={['user', 'owner', 'admin']}>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
+      {/* Auth Routes - No Navbar */}
+      <Route
+        path="/login"
+        element={
+          isAuthenticated ? <Navigate to="/home" replace /> : <LoginPage />
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          isAuthenticated ? <Navigate to="/home" replace /> : <RegisterPage />
+        }
+      />
+      <Route
+        path="/verify-email"
+        element={<EmailVerificationPage />}
+      />
 
-          {/* Owner Protected Routes */}
-          <Route
-            path="/owner"
-            element={
-              <ProtectedRoute allowedRoles={['owner']}>
-                <OwnerDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/owner/courts"
-            element={
-              <ProtectedRoute allowedRoles={['owner']}>
-                <OwnerCourtsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/owner/bookings"
-            element={
-              <ProtectedRoute allowedRoles={['owner']}>
-                <OwnerBookingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/owner/profile"
-            element={
-              <ProtectedRoute allowedRoles={['owner']}>
-                <OwnerProfilePage />
-              </ProtectedRoute>
-            }
-          />
+      {/* Main App Routes - With Navbar */}
+      <Route path="/*" element={
+        <>
+          <Navbar />
+          <main className="min-h-screen">
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/venues" element={<VenuesPage />} />
+              <Route path="/venues/:id" element={<VenueDetailsPage />} />
 
-          {/* Admin Protected Routes */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/facilities"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminFacilitiesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminUsersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/profile"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminProfilePage />
-              </ProtectedRoute>
-            }
-          />
+              {/* User Protected Routes */}
+              <Route
+                path="/booking"
+                element={
+                  <ProtectedRoute allowedRoles={['user']}>
+                    <BookingPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/payment"
+                element={
+                  <ProtectedRoute allowedRoles={['user']}>
+                    <PaymentPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-bookings"
+                element={
+                  <ProtectedRoute allowedRoles={['user']}>
+                    <MyBookingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'owner', 'admin']}>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
 
-          {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-      <Footer />
-    </>
+              {/* Owner Protected Routes */}
+              <Route
+                path="/owner"
+                element={
+                  <ProtectedRoute allowedRoles={['owner']}>
+                    <OwnerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/owner/courts"
+                element={
+                  <ProtectedRoute allowedRoles={['owner']}>
+                    <OwnerCourtsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/owner/bookings"
+                element={
+                  <ProtectedRoute allowedRoles={['owner']}>
+                    <OwnerBookingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/owner/profile"
+                element={
+                  <ProtectedRoute allowedRoles={['owner']}>
+                    <OwnerProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Admin Protected Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/facilities"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminFacilitiesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminUsersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/profile"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Catch all route */}
+              <Route path="*" element={<Navigate to="/home" replace />} />
+            </Routes>
+          </main>
+          <Footer />
+        </>
+      } />
+    </Routes>
   )
 }
 
