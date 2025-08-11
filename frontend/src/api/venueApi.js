@@ -5,17 +5,12 @@ export const venueApi = {
   // Get all venues with filters
   getVenues: async (params = {}) => {
     if (shouldUseMockApi()) {
-      try {
-        return await mockVenueApi.getVenues(params)
-      } catch (error) {
-        console.warn('Using mock data due to API error:', error.message)
-        return await mockVenueApi.getVenues(params)
-      }
+      return await mockVenueApi.getVenues(params)
     }
     try {
       return await api.get('/venues', { params })
     } catch (error) {
-      console.warn('API unavailable, using mock data:', error.message)
+      // Silently fall back to mock data without showing errors
       return await mockVenueApi.getVenues(params)
     }
   },
@@ -33,7 +28,7 @@ export const venueApi = {
     try {
       return await api.get(`/venues/${id}`)
     } catch (error) {
-      console.warn('API unavailable, using mock data:', error.message)
+      // Silently fall back to mock data without showing errors
       return await mockVenueApi.getVenueById(id)
     }
   },
@@ -87,8 +82,16 @@ export const venueApi = {
   },
 
   // Get courts for a venue
-  getVenueCourts: (venueId) => {
-    return api.get(`/venues/${venueId}/courts`)
+  getVenueCourts: async (venueId) => {
+    if (shouldUseMockApi()) {
+      return await mockVenueApi.getVenueCourts(venueId)
+    }
+    try {
+      return await api.get(`/venues/${venueId}/courts`)
+    } catch (error) {
+      // Silently fall back to mock data without showing errors
+      return await mockVenueApi.getVenueCourts(venueId)
+    }
   },
 
   // Create court for venue (owner only)

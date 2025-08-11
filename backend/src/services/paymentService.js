@@ -126,7 +126,7 @@ class PaymentService {
       return result;
     } catch (error) {
       logger.error('Payment processing failed:', error);
-      
+
       // Log failed payment attempt
       logBusiness('PAYMENT_FAILED', paymentData.userId, {
         bookingId: paymentData.bookingId,
@@ -384,7 +384,7 @@ class PaymentService {
     try {
       // Test circuit breaker status
       const circuitBreakerStats = this.circuitBreaker.stats;
-      
+
       return {
         status: 'healthy',
         circuitBreaker: {

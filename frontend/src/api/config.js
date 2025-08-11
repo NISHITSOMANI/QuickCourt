@@ -33,7 +33,19 @@ api.interceptors.response.use(
   },
   (error) => {
     const { response } = error
+    const isDevelopment = import.meta.env.DEV
+    const useMockApi = import.meta.env.VITE_USE_MOCK_API === 'true'
 
+    // Don't show network errors in development or when using mock API
+    if (isDevelopment || useMockApi) {
+      // Only log to console in development
+      if (isDevelopment) {
+        console.warn('API Error (using mock data):', error.message)
+      }
+      return Promise.reject(error)
+    }
+
+    // Show user-friendly errors only in production
     if (response?.status === 401) {
       // Unauthorized - clear token and redirect to login
       localStorage.removeItem('token')

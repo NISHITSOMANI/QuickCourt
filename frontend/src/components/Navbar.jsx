@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { 
-  Menu, 
-  X, 
-  User, 
-  LogOut, 
-  Calendar, 
+import {
+  Menu,
+  X,
+  User,
+  LogOut,
+  Calendar,
   Settings,
   BarChart3,
   Building2,
@@ -81,34 +81,24 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-8">
             <Link
               to="/"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/') 
-                  ? 'text-primary-600 bg-primary-50' 
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')
+                  ? 'text-primary-600 bg-primary-50'
                   : 'text-gray-700 hover:text-primary-600'
-              }`}
+                }`}
             >
               Home
             </Link>
             <Link
               to="/venues"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/venues')
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/venues')
                   ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-700 hover:text-blue-600'
-              }`}
+                }`}
             >
               Find Courts
             </Link>
 
-            {/* Temporary test link for payment page */}
-            {import.meta.env.DEV && (
-              <Link
-                to="/payment"
-                className="px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:text-red-700 border border-red-300 hover:border-red-400"
-              >
-                🧪 Test Payment
-              </Link>
-            )}
+
 
             {isAuthenticated ? (
               <div className="relative">
@@ -181,22 +171,20 @@ const Navbar = () => {
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               <Link
                 to="/"
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActive('/') 
-                    ? 'text-primary-600 bg-primary-50' 
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/')
+                    ? 'text-primary-600 bg-primary-50'
                     : 'text-gray-700 hover:text-primary-600'
-                }`}
+                  }`}
                 onClick={() => setIsOpen(false)}
               >
                 Home
               </Link>
               <Link
                 to="/venues"
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActive('/venues') 
-                    ? 'text-primary-600 bg-primary-50' 
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/venues')
+                    ? 'text-primary-600 bg-primary-50'
                     : 'text-gray-700 hover:text-primary-600'
-                }`}
+                  }`}
                 onClick={() => setIsOpen(false)}
               >
                 Find Courts

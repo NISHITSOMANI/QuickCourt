@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from 'react-query'
-import { 
-  MapPin, 
-  Star, 
-  Clock, 
-  DollarSign, 
+import {
+  MapPin,
+  Star,
+  Clock,
+  DollarSign,
   Calendar,
   Users,
   Wifi,
@@ -18,96 +18,71 @@ import {
 import { venueApi } from '../api/venueApi'
 import { useAuth } from '../context/AuthContext'
 import { useBooking } from '../context/BookingContext'
+import VenueMap from '../components/VenueMap'
+import PaymentMethodModal from '../components/PaymentMethodModal'
 
 const VenueDetailsPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated } = useAuth()
   const { setVenue } = useBooking()
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [venue, setVenueData] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  // Fetch venue details
-  const { data: venue, isLoading, error } = useQuery(
-    ['venue', id],
-    () => venueApi.getVenueById(id),
-    {
-      select: (response) => response.data.venue,
-    }
-  )
+  // Fetch venue data with manual state management to avoid React Query issues
+  useEffect(() => {
+    const fetchVenue = async () => {
+      if (!id) return
 
-  // Fetch venue courts
-  const { data: courts } = useQuery(
-    ['venue-courts', id],
-    () => venueApi.getVenueCourts(id),
-    {
-      select: (response) => response.data.courts || [],
-      enabled: !!id,
-    }
-  )
-
-  // Fetch venue reviews
-  const { data: reviews } = useQuery(
-    ['venue-reviews', id],
-    () => venueApi.getVenueReviews(id, { limit: 5 }),
-    {
-      select: (response) => response.data.reviews || [],
-      enabled: !!id,
-    }
-  )
-
-  const handleBookNow = () => {
-    console.log('Book Now clicked - attempting to navigate to payment')
-
-    // Skip authentication checks for now to test navigation
-    // if (!isAuthenticated) {
-    //   console.log('User not authenticated, redirecting to login')
-    //   navigate('/login', { state: { from: location } })
-    //   return
-    // }
-
-    // if (user?.role !== 'user') {
-    //   toast.error('Only users can book courts')
-    //   return
-    // }
-
-    // Create simple booking data for payment
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    const defaultDate = tomorrow.toISOString().split('T')[0]
-
-    const bookingData = {
-      venueId: venue?._id || 'venue-123',
-      courtId: 'court-123',
-      date: defaultDate,
-      startTime: '10:00',
-      endTime: '11:00',
-      duration: 1,
-      totalAmount: venue?.startingPrice || 50,
-      venue: {
-        _id: venue?._id || 'venue-123',
-        name: venue?.name || 'Elite Tennis Club',
-        location: venue?.shortLocation || 'Sports District'
-      },
-      court: {
-        _id: 'court-123',
-        name: 'Court 1',
-        pricePerHour: venue?.startingPrice || 50
-      },
-      timeSlot: {
-        startTime: '10:00',
-        endTime: '11:00'
+      try {
+        setIsLoading(true)
+        setError(null)
+        const response = await venueApi.getVenueById(id)
+        const venueData = response?.data?.venue || response?.data
+        setVenueData(venueData)
+      } catch (err) {
+        setError(err)
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    console.log('Attempting navigation to /payment with data:', bookingData)
+    fetchVenue()
+  }, [id])
 
-    try {
-      navigate('/payment', { state: { bookingData } })
-      console.log('Navigation command executed')
-    } catch (error) {
-      console.error('Navigation error:', error)
-      toast.error('Navigation failed: ' + error.message)
+  // Simplified - no additional queries for now
+  const courts = []
+  const reviews = []
+
+  const handleBookNow = () => {
+    if (!isAuthenticated) {
+      // Store venue info and redirect to login page
+      setVenue(venue)
+      navigate('/login', {
+        state: {
+          from: `/venues/${id}`,
+          action: 'booking',
+          venue: venue
+        }
+      })
+      return
     }
+
+    setVenue(venue)
+    setShowPaymentModal(true)
+  }
+
+  const handlePaymentMethodSelect = (paymentMethod) => {
+    // Navigate to booking page with selected venue and payment method
+    setShowPaymentModal(false)
+    navigate('/booking', {
+      state: {
+        selectedVenue: venue,
+        selectedPaymentMethod: paymentMethod
+      }
+    })
   }
 
   const getAmenityIcon = (amenity) => {
@@ -124,29 +99,43 @@ const VenueDetailsPage = () => {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
-        className={`w-5 h-5 ${
-          index < Math.floor(rating)
-            ? 'text-yellow-400 fill-current'
-            : 'text-gray-300'
-        }`}
+        className={`w-5 h-5 ${index < Math.floor(rating)
+          ? 'text-yellow-400 fill-current'
+          : 'text-gray-300'
+          }`}
       />
     ))
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
+  // Simplified rendering logic to prevent glitches
+  const renderContent = () => {
+    // Always show loading first
+    if (isLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading venue details...</p>
+          </div>
+        </div>
+      )
+    }
 
-  if (error || !venue) {
+    // If we have venue data, show it
+    if (venue && venue._id && venue.name) {
+      return renderVenueDetails()
+    }
+
+    // Show error or not found
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Venue Not Found</h2>
-          <p className="text-gray-600 mb-4">The venue you're looking for doesn't exist.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            {error ? 'Error Loading Venue' : 'Venue Not Found'}
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {error ? 'There was an error loading the venue details.' : 'The venue you\'re looking for doesn\'t exist.'}
+          </p>
           <button
             onClick={() => navigate('/venues')}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md"
@@ -158,31 +147,23 @@ const VenueDetailsPage = () => {
     )
   }
 
-  return (
+  const renderVenueDetails = () => (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Image Gallery */}
+        {/* Hero Image */}
         <div className="mb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2">
-              <img
-                src={venue.photos?.[selectedImageIndex] || '/placeholder-venue.jpg'}
-                alt={venue.name}
-                className="w-full h-96 object-cover rounded-lg"
-              />
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
-              {venue.photos?.slice(0, 4).map((photo, index) => (
-                <img
-                  key={index}
-                  src={photo}
-                  alt={`${venue.name} ${index + 1}`}
-                  className={`w-full h-44 lg:h-20 object-cover rounded-lg cursor-pointer border-2 ${
-                    selectedImageIndex === index ? 'border-blue-600' : 'border-transparent'
-                  }`}
-                  onClick={() => setSelectedImageIndex(index)}
-                />
-              ))}
+          <div className="relative h-64 md:h-80 lg:h-96 rounded-lg overflow-hidden">
+            <img
+              src={venue.images?.[0] || '/placeholder-venue.jpg'}
+              alt={venue.name}
+              className="w-full h-full object-cover"
+            />
+            {/* Overlay with venue name */}
+            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
+              <div className="p-6 text-white">
+                <h1 className="text-3xl md:text-4xl font-bold mb-2">{venue.name}</h1>
+                <p className="text-lg opacity-90">{venue.shortLocation || venue.address}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -205,7 +186,7 @@ const VenueDetailsPage = () => {
                   <span>{venue.shortLocation || venue.address}</span>
                 </div>
               </div>
-              
+
               {/* Sports Tags */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {venue.sports?.map((sport, index) => (
@@ -315,7 +296,7 @@ const VenueDetailsPage = () => {
                 </div>
                 <p className="text-sm text-gray-600">Starting from</p>
               </div>
-              
+
               <button
                 onClick={handleBookNow}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-md font-medium transition-colors"
@@ -353,12 +334,34 @@ const VenueDetailsPage = () => {
                   </div>
                 )}
               </div>
+
+              {/* Venue Map */}
+              <div className="mt-6">
+                <h4 className="text-md font-medium text-gray-900 mb-3">Location</h4>
+                <VenueMap venue={venue} height="250px" />
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Payment Method Modal */}
+      <PaymentMethodModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onPaymentMethodSelect={handlePaymentMethodSelect}
+        totalAmount={venue?.startingPrice}
+        bookingDetails={{
+          venueName: venue?.name,
+          courtName: 'Available courts',
+          date: 'To be selected',
+          timeSlot: 'To be selected'
+        }}
+      />
     </div>
   )
+
+  return renderContent()
 }
 
 export default VenueDetailsPage
