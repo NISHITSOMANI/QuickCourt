@@ -185,6 +185,147 @@ const rejectFacility = catchAsync(async (req, res) => {
 /**
  * Get all users
  */
+/**
+ * Get all facilities with optional filtering
+ */
+/**
+ * Get platform-wide analytics
+ */
+const getPlatformAnalytics = catchAsync(async (req, res) => {
+  const { startDate, endDate, venueId, sport } = req.query;
+  
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  const User = require('../models/User');
+  const Venue = require('../models/Venue');
+  const Booking = require('../models/Booking');
+  
+  // Build the base query for bookings
+  const bookingMatch = {
+    createdAt: { $gte: start, $lte: end },
+    status: { $in: ['confirmed', 'completed'] }
+  };
+  
+  if (venueId) {
+    bookingMatch.venue = venueId;
+  }
+  
+  if (sport) {
+    bookingMatch['sport'] = sport;
+  }
+  
+  // Get total users, venues, and bookings
+  const [
+    totalUsers,
+    totalVenues,
+    totalBookings,
+    revenueData,
+    popularSports
+  ] = await Promise.all([
+    // Total users
+    User.countDocuments({}),
+    
+    // Total venues
+    Venue.countDocuments(venueId ? { _id: venueId } : {}),
+    
+    // Total bookings
+    Booking.countDocuments(bookingMatch),
+    
+    // Total revenue
+    Booking.aggregate([
+      {
+        $match: bookingMatch
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$totalAmount' },
+          averageRevenue: { $avg: '$totalAmount' }
+        }
+      }
+    ]),
+    
+    // Popular sports
+    Booking.aggregate([
+      {
+        $match: bookingMatch
+      },
+      {
+        $group: {
+          _id: '$sport',
+          count: { $sum: 1 },
+          totalRevenue: { $sum: '$totalAmount' }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ])
+  ]);
+  
+  // Format the response
+  const result = {
+    totalUsers,
+    totalVenues,
+    totalBookings,
+    totalRevenue: revenueData[0]?.totalRevenue || 0,
+    averageRevenue: revenueData[0]?.averageRevenue || 0,
+    popularSports: popularSports.map(sport => ({
+      sport: sport._id,
+      bookings: sport.count,
+      revenue: sport.totalRevenue
+    })),
+    dateRange: {
+      startDate: start,
+      endDate: end
+    }
+  };
+  
+  res.json({
+    success: true,
+    data: result
+  });
+});
+
+/**
+ * Get all facilities with optional filtering
+ */
+const getFacilities = catchAsync(async (req, res) => {
+  const { status, page = 1, limit = 10, sort = '-createdAt' } = req.query;
+  const skip = (page - 1) * limit;
+  
+  const query = {};
+  if (status) {
+    query.status = status;
+  }
+  
+  const Venue = require('../models/Venue');
+  
+  const [facilities, total] = await Promise.all([
+    Venue.find(query)
+      .populate('owner', 'name email')
+      .sort(sort)
+      .skip(parseInt(skip))
+      .limit(parseInt(limit))
+      .lean(),
+    Venue.countDocuments(query)
+  ]);
+  
+  const totalPages = Math.ceil(total / limit);
+  
+  res.json({
+    success: true,
+    count: facilities.length,
+    total,
+    page: parseInt(page),
+    totalPages,
+    data: facilities
+  });
+});
+
+/**
+ * Get all users with optional filtering
+ */
 const getUsers = catchAsync(async (req, res) => {
   const { role, status, q, page = 1, limit = 10 } = req.query;
   const skip = (page - 1) * limit;
@@ -329,6 +470,8 @@ const takeReportAction = catchAsync(async (req, res) => {
 
 module.exports = {
   getAdminStats,
+  getPlatformAnalytics,
+  getFacilities,
   getPendingFacilities,
   getFacilityDetails,
   approveFacility,
@@ -337,5 +480,5 @@ module.exports = {
   banUser,
   unbanUser,
   getReports,
-  takeReportAction,
+  takeReportAction
 };

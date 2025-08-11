@@ -9,13 +9,23 @@ const router = express.Router();
 router.use(authenticate);
 router.use(authorize('admin'));
 
-// Admin statistics
+// Admin statistics and analytics
+router.get('/analytics',
+  validateQuery('analyticsQuery'),
+  adminController.getPlatformAnalytics
+);
+
 router.get('/stats',
   validateQuery('dateRange'),
   adminController.getAdminStats
 );
 
 // Facility management
+router.get('/facilities',
+  validateQuery('paginationQuery'),
+  adminController.getFacilities
+);
+
 router.get('/facilities/pending',
   validateQuery('paginationQuery'),
   adminController.getPendingFacilities

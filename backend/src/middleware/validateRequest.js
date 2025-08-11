@@ -67,6 +67,13 @@ const schemas = {
   analyticsQuery: Joi.object({
     startDate: Joi.date().iso().required(),
     endDate: Joi.date().iso().min(Joi.ref('startDate')).required(),
+    venueId: Joi.string().hex().length(24),
+    sport: Joi.string().trim().max(50)
+  }),
+  
+  analyticsQuery: Joi.object({
+    startDate: Joi.date().iso().required(),
+    endDate: Joi.date().iso().min(Joi.ref('startDate')).required(),
     groupBy: Joi.string().valid('day', 'week', 'month', 'year').default('day'),
     venueId: Joi.string().hex().length(24),
     sportType: Joi.string().valid('cricket', 'football', 'basketball', 'tennis', 'badminton', 'volleyball', 'swimming', 'gym'),
