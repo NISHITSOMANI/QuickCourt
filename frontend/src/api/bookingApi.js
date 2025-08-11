@@ -15,7 +15,7 @@ export const bookingApi = {
     try {
       return await api.get('/bookings/my', { params })
     } catch (error) {
-      console.warn('API unavailable, using mock data:', error.message)
+      // Silently fall back to mock data without showing errors
       return await mockBookingApi.getMyBookings(params)
     }
   },

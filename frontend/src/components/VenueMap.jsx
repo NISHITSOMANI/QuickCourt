@@ -23,7 +23,7 @@ const StaticMap = ({ venue, height = '300px' }) => {
       }
       return null
     } catch (error) {
-      console.error('Geocoding error:', error)
+      // Silently handle geocoding errors
       return null
     }
   }

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   MapPin,
   Star,
@@ -10,8 +10,12 @@ import {
   Coffee,
   Shield
 } from 'lucide-react'
+import { useBooking } from '../context/BookingContext'
 
 const VenueCard = ({ venue, className = '' }) => {
+  const navigate = useNavigate()
+  const { setSelectedVenue } = useBooking()
+
   const {
     _id,
     name,
@@ -26,6 +30,11 @@ const VenueCard = ({ venue, className = '' }) => {
     amenities = [],
     operatingHours,
   } = venue
+
+  const handleBookNow = () => {
+    setSelectedVenue(venue)
+    navigate('/booking')
+  }
 
   const getAmenityIcon = (amenity) => {
     const iconMap = {
@@ -58,7 +67,7 @@ const VenueCard = ({ venue, className = '' }) => {
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 ${className}`}>
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full ${className}`}>
       {/* Image */}
       <div className="relative h-48 bg-gray-200">
         {images.length > 0 ? (
@@ -102,7 +111,7 @@ const VenueCard = ({ venue, className = '' }) => {
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 flex flex-col h-full">
         {/* Header */}
         <div className="mb-2">
           <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">
@@ -162,13 +171,21 @@ const VenueCard = ({ venue, className = '' }) => {
           </div>
         )}
 
-        {/* Action Button */}
-        <Link
-          to={`/venues/${_id}`}
-          className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors text-center block"
-        >
-          View Details & Book
-        </Link>
+        {/* Action Buttons */}
+        <div className="flex space-x-2 mt-auto">
+          <Link
+            to={`/venues/${_id}`}
+            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md text-sm font-medium transition-colors text-center border border-gray-300"
+          >
+            View Details
+          </Link>
+          <button
+            onClick={handleBookNow}
+            className="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors text-center"
+          >
+            Book Now
+          </button>
+        </div>
       </div>
     </div>
   )
