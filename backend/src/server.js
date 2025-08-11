@@ -12,14 +12,22 @@ const STARTUP_DB_TIMEOUT_MS = Number(process.env.STARTUP_DB_TIMEOUT_MS) || 10_00
 let server;
 let shuttingDown = false;
 
-// pino final logger (if available)
-const finalLogger = typeof pino.final === 'function' ? pino.final(logger) : logger;
+// ANSI color codes for console output
+const colors = {
+  reset: '\x1b[0m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  bright: '\x1b[1m',
+};
 
 // Small helper to synchronously write to stdout/stderr so Windows/Powershell shows messages immediately
-function syncStdoutWrite(msg) {
+function syncStdoutWrite(msg, color = '') {
   try {
+    // Apply color if provided and reset at the end
+    const formattedMsg = color ? `${color}${msg}${colors.reset}` : msg;
     // fd 1 -> stdout
-    fs.writeSync(1, msg + '\n');
+    fs.writeSync(1, formattedMsg + '\n');
   } catch (e) {
     // best-effort fallback to console
     try { console.log(msg); } catch (_) { }
@@ -56,21 +64,34 @@ function closeServer(serverInstance, timeoutMs) {
   });
 }
 
-function disconnectMongoose(timeoutMs) {
+function disconnectDatabase(timeoutMs) {
   return new Promise((resolve, reject) => {
     let finished = false;
-    mongoose.connection.close(false, (err) => {
-      if (finished) return;
-      finished = true;
-      if (err) return reject(err);
-      resolve();
-    });
+
+    // Use the db instance disconnect method with timeout protection
+    const disconnectPromise = db.disconnect();
+
+    disconnectPromise
+      .then(() => {
+        if (finished) return;
+        finished = true;
+        resolve();
+      })
+      .catch((err) => {
+        if (finished) return;
+        finished = true;
+        reject(err);
+      });
+
     setTimeout(() => {
       if (finished) return;
       finished = true;
-      reject(new Error('Mongoose disconnect timed out'));
+      reject(new Error('Database disconnect timed out'));
     }, timeoutMs);
-  });
+  })
+    .catch(err => {
+      throw err;
+    });
 }
 
 // Start-up sequence
@@ -116,51 +137,42 @@ function disconnectMongoose(timeoutMs) {
   }
 })();
 
-// Central shutdown procedure (synchronous final writes included)
+// Central shutdown procedure (synchronous final writes only)
 async function doShutdown(signal) {
   if (shuttingDown) {
-    logger.warn('Shutdown already in progress, ignoring duplicate signal');
+    syncStdoutWrite('[SHUTDOWN] Shutdown already in progress, ignoring duplicate signal', colors.yellow);
     return;
   }
   shuttingDown = true;
 
-  const startMsg = `Received ${signal}. Starting graceful shutdown...`;
-  logger.info(startMsg);
-  syncStdoutWrite(startMsg);
+  syncStdoutWrite('\n=== SHUTDOWN INITIATED ===', colors.bright);
+  syncStdoutWrite(`Signal: ${signal}`, '');
+  syncStdoutWrite('Shutting down services...\n', '');
 
-  const hardTimeout = setTimeout(() => {
-    const msg = 'Shutdown timed out, forcing exit';
-    logger.error(msg);
-    syncStdoutWrite(msg);
-    process.exit(1);
-  }, SHUTDOWN_TIMEOUT_MS);
+  const COMPONENT_TIMEOUT = 10000; // 10 seconds for each component
 
   try {
     if (server) {
-      logger.info('Closing HTTP server...');
-      server.close(() => {
-        logger.info('HTTP server closed');
-        syncStdoutWrite('HTTP server closed');
-      });
-
-      // Immediately destroy any keep-alive sockets
-      server.on('connection', (socket) => socket.destroy());
+      syncStdoutWrite('[SHUTDOWN] Closing HTTP server...', colors.yellow);
+      await closeServer(server, COMPONENT_TIMEOUT);
+      syncStdoutWrite('[SHUTDOWN] HTTP server closed', colors.green);
     }
 
-    logger.info('Closing MongoDB connection...');
-    await mongoose.connection.close(true);
-    logger.info('MongoDB connection closed');
+    syncStdoutWrite('[SHUTDOWN] Closing MongoDB connection...', colors.yellow);
+    await disconnectDatabase(COMPONENT_TIMEOUT);
+    syncStdoutWrite('[SHUTDOWN] MongoDB connection closed', colors.green);
 
-    clearTimeout(hardTimeout);
-    syncStdoutWrite('Shutdown complete. Exiting now.');
+    syncStdoutWrite('\n=== SHUTDOWN COMPLETE ===', colors.bright);
+    syncStdoutWrite(`Time: ${new Date().toLocaleTimeString()}`, '');
+    
+    // Force immediate exit to prevent any lingering handles
     process.exit(0);
   } catch (err) {
-    logger.error({ err }, 'Error during shutdown');
-    syncStdoutWrite(`Error during shutdown: ${err.message}`);
-    clearTimeout(hardTimeout);
-    process.exit(1);
+    syncStdoutWrite(`[SHUTDOWN ERROR] ${err.message || err}`, colors.red);
+    process.exit(1); // Exit with error code if shutdown fails
   }
 }
+
 function gracefulExit(code = 0) {
   doShutdown('gracefulExit').then(() => process.exit(code));
 }
@@ -171,15 +183,15 @@ process.on('SIGINT', () => doShutdown('SIGINT'));
 
 // uncaught & unhandled rejection handlers
 process.on('uncaughtException', (err) => {
-  try { finalLogger.fatal({ err }, 'uncaughtException - shutting down'); } catch (e) { console.error(e); }
-  syncStdoutWrite(`uncaughtException: ${err && err.message ? err.message : String(err)}`);
-  setTimeout(() => process.exit(1), 200);
+  syncStdoutWrite(`[FATAL] Uncaught Exception: ${err.message}`, colors.red);
+  console.error(err.stack);
+  process.exit(1);
 });
 
-process.on('unhandledRejection', (reason) => {
-  try { finalLogger.error({ reason }, 'unhandledRejection - shutting down'); } catch (e) { console.error(e); }
-  syncStdoutWrite(`unhandledRejection: ${reason && reason.message ? reason.message : String(reason)}`);
-  setTimeout(() => process.exit(1), 200);
+process.on('unhandledRejection', (reason, promise) => {
+  syncStdoutWrite(`[FATAL] Unhandled Rejection: ${reason}`, colors.red);
+  console.error(promise);
+  process.exit(1);
 });
 
 module.exports = server;

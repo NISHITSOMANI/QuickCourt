@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const config = require('../config/env');
 const { AppError } = require('../middleware/errorHandler');
 const { logger, logBusiness } = require('../config/logger');
+const Booking = require('../models/Booking');
+const lockService = require('./lockService');
 
 /**
  * Payment Service with Circuit Breaker and Retry Logic
@@ -78,7 +80,7 @@ class PaymentService {
   }
 
   /**
-   * Process payment with circuit breaker
+   * Process payment with circuit breaker and pre-gateway validation
    */
   async processPayment(paymentData) {
     try {
@@ -98,35 +100,84 @@ class PaymentService {
         throw new AppError('Invalid payment method', 400);
       }
 
-      // Process payment through circuit breaker
-      const result = await this.circuitBreaker.fire(paymentData);
+      // Pre-gateway validation: Check if booking exists and is still available
+      const booking = await Booking.findById(bookingId);
+      if (!booking) {
+        throw new AppError('Booking not found', 404);
+      }
 
-      // Log successful payment
-      logBusiness('PAYMENT_PROCESSED', userId, {
-        bookingId,
-        paymentId: result.paymentId,
-        transactionId: result.transactionId,
-        amount,
-        method,
-        gateway: result.gateway,
-      });
+      // Create lock key for this booking
+      const lockKey = `payment:${bookingId}`;
+      const lockOwner = `user:${userId}:${Date.now()}`;
 
-      // Store payment record (in production, use a Payment model)
-      await this.storePaymentRecord({
-        bookingId,
-        paymentId: result.paymentId,
-        transactionId: result.transactionId,
-        amount,
-        method,
-        status: result.status,
-        gateway: result.gateway,
-        userId,
-      });
+      // Use distributed locking to ensure only one payment attempt proceeds
+      const paymentLockAcquired = await lockService.acquireWithRetry(lockKey, lockOwner);
+      if (!paymentLockAcquired) {
+        throw new AppError('Payment is already being processed for this booking', 409);
+      }
 
-      return result;
+      try {
+        // Double-check booking status under lock
+        const freshBooking = await Booking.findById(bookingId);
+        if (!freshBooking || 
+            (freshBooking.paymentStatus !== 'pending' && 
+             freshBooking.paymentStatus !== 'failed')) {
+          throw new AppError('Booking is no longer available for payment', 400);
+        }
+
+        // Atomically check and update booking status to prevent double payments
+        const updatedBooking = await Booking.findOneAndUpdate(
+          { 
+            _id: bookingId, 
+            $or: [
+              { paymentStatus: 'pending' },
+              { paymentStatus: 'failed' }
+            ]
+          },
+          { paymentStatus: 'processing' },
+          { new: true }
+        );
+
+        // If booking not found or already paid, throw an error
+        if (!updatedBooking) {
+          throw new AppError('Booking not found or payment already processed', 400);
+        }
+
+        // Process payment through circuit breaker
+        const result = await this.circuitBreaker.fire(paymentData);
+
+        // Log successful payment
+        logBusiness('PAYMENT_PROCESSED', userId, {
+          bookingId,
+          paymentId: result.paymentId,
+          transactionId: result.transactionId,
+          amount,
+          method,
+          status: result.status,
+          gateway: result.gateway,
+          userId,
+        });
+
+        // Store payment record
+        await this.storePaymentRecord({
+          bookingId,
+          paymentId: result.paymentId,
+          transactionId: result.transactionId,
+          amount,
+          method,
+          status: result.status,
+          gateway: result.gateway,
+          userId,
+        });
+
+        return result;
+      } finally {
+        // Always release the payment lock
+        await lockService.release(lockKey, lockOwner);
+      }
     } catch (error) {
       logger.error('Payment processing failed:', error);
-      
+
       // Log failed payment attempt
       logBusiness('PAYMENT_FAILED', paymentData.userId, {
         bookingId: paymentData.bookingId,
@@ -255,16 +306,19 @@ class PaymentService {
   async handlePaymentSuccess(data) {
     const { paymentId, bookingId, amount } = data;
 
-    // Update booking payment status
+    // Atomically update booking payment status
     const Booking = require('../models/Booking');
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findOneAndUpdate(
+      { _id: bookingId },
+      { 
+        paymentStatus: 'paid',
+        paymentId: paymentId,
+        status: 'confirmed'
+      },
+      { new: true }
+    );
 
     if (booking) {
-      booking.paymentStatus = 'paid';
-      booking.paymentId = paymentId;
-      booking.status = 'confirmed';
-      await booking.save();
-
       logBusiness('PAYMENT_WEBHOOK_SUCCESS', booking.user, {
         bookingId,
         paymentId,
@@ -279,15 +333,18 @@ class PaymentService {
   async handlePaymentFailure(data) {
     const { paymentId, bookingId, reason } = data;
 
-    // Update booking payment status
+    // Atomically update booking payment status
     const Booking = require('../models/Booking');
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findOneAndUpdate(
+      { _id: bookingId },
+      { 
+        paymentStatus: 'failed',
+        paymentId: paymentId
+      },
+      { new: true }
+    );
 
     if (booking) {
-      booking.paymentStatus = 'failed';
-      booking.paymentId = paymentId;
-      await booking.save();
-
       logBusiness('PAYMENT_WEBHOOK_FAILURE', booking.user, {
         bookingId,
         paymentId,
@@ -302,15 +359,18 @@ class PaymentService {
   async handleRefundProcessed(data) {
     const { refundId, bookingId, amount } = data;
 
-    // Update booking refund status
+    // Atomically update booking refund status
     const Booking = require('../models/Booking');
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findOneAndUpdate(
+      { _id: bookingId },
+      { 
+        paymentStatus: 'refunded',
+        refundAmount: amount
+      },
+      { new: true }
+    );
 
     if (booking) {
-      booking.paymentStatus = 'refunded';
-      booking.refundAmount = amount;
-      await booking.save();
-
       logBusiness('REFUND_WEBHOOK_PROCESSED', booking.user, {
         bookingId,
         refundId,
@@ -384,7 +444,7 @@ class PaymentService {
     try {
       // Test circuit breaker status
       const circuitBreakerStats = this.circuitBreaker.stats;
-      
+
       return {
         status: 'healthy',
         circuitBreaker: {

@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
+import {
+  Calendar,
+  Clock,
+  MapPin,
   DollarSign,
   Filter,
   X,
   Star,
   MessageSquare
 } from 'lucide-react'
+import DashboardLayout from '../components/DashboardLayout'
 import { bookingApi } from '../api/bookingApi'
+import { userApi } from '../api/dashboardApi'
 import Pagination from '../components/Pagination'
 import toast from 'react-hot-toast'
 
@@ -94,77 +96,73 @@ const MyBookingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
-          <p className="text-gray-600 mt-2">View and manage your court bookings</p>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date From
-                </label>
-                <input
-                  type="date"
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-            </div>
-
-            {(statusFilter || dateFilter) && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+    <DashboardLayout
+      title="My Bookings"
+      subtitle="View and manage your court bookings"
+    >
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <X className="w-4 h-4" />
-                <span>Clear Filters</span>
-              </button>
-            )}
-          </div>
-        </div>
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
 
-        {/* Bookings List */}
-        <div className="space-y-6">
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="bg-gray-200 rounded-lg h-32 animate-pulse"></div>
-              ))}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date From
+              </label>
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
             </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Error loading bookings. Please try again.</p>
-            </div>
-          ) : data?.bookings?.length === 0 ? (
-            <div className="text-center py-12">
-              <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
-              <p className="text-gray-500 mb-4">You haven't made any bookings yet.</p>
+          </div>
+
+          {(statusFilter || dateFilter) && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+            >
+              <X className="w-4 h-4" />
+              <span>Clear Filters</span>
+            </button>
+        )}
+        </div>
+      </div>
+
+      {/* Bookings List */}
+      <div className="space-y-6">
+        {isLoading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="bg-gray-200 rounded-lg h-32 animate-pulse"></div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">Error loading bookings. Please try again.</p>
+          </div>
+        ) : data?.bookings?.length === 0 ? (
+          <div className="text-center py-12">
+            <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
+            <p className="text-gray-500 mb-4">You haven't made any bookings yet.</p>
               <button
                 onClick={() => window.location.href = '/venues'}
                 className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-md font-medium"
@@ -247,18 +245,17 @@ const MyBookingsPage = () => {
               {/* Pagination */}
               {data?.totalPages > 1 && (
                 <div className="mt-8">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={data.totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={data.totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
+          </>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
 

@@ -10,6 +10,7 @@ const initialState = {
   isAuthenticated: false,
   loading: true,
   error: null,
+  permissions: [],
 }
 
 const authReducer = (state, action) => {
@@ -28,6 +29,7 @@ const authReducer = (state, action) => {
         isAuthenticated: true,
         loading: false,
         error: null,
+        permissions: action.payload.permissions || [],
       }
     case 'AUTH_FAIL':
       return {
@@ -168,6 +170,28 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' })
   }
 
+  // Role and permission checking utilities
+  const hasRole = (role) => {
+    return state.user?.role === role
+  }
+
+  const hasAnyRole = (roles) => {
+    return roles.includes(state.user?.role)
+  }
+
+  const hasPermission = (permission) => {
+    return state.permissions.includes(permission)
+  }
+
+  const getDashboardRoute = () => {
+    if (!state.user?.role) return '/'
+    return `/dashboard/${state.user.role}`
+  }
+
+  const canAccessDashboard = () => {
+    return state.isAuthenticated && state.user?.role
+  }
+
   const value = {
     ...state,
     login,
@@ -175,6 +199,11 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
     clearError,
+    hasRole,
+    hasAnyRole,
+    hasPermission,
+    getDashboardRoute,
+    canAccessDashboard,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
