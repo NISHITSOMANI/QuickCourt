@@ -1,41 +1,38 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ProtectedRoute from './ProtectedRoute'
-import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
+import Navbar from '../components/layout/Navbar'
+import Footer from '../components/layout/Footer'
 
 // Public Pages
 import LandingPage from '../pages/LandingPage'
 import HomePage from '../pages/HomePage'
 import VenuesPage from '../pages/VenuesPage'
 import VenueDetailsPage from '../pages/VenueDetailsPage'
-import LoginPage from '../pages/LoginPage'
-import RegisterPage from '../pages/RegisterPage'
+import LoginPage from '../pages/auth/LoginPage'
+import RegisterPage from '../pages/auth/RegisterPage'
 import EmailVerificationPage from '../pages/EmailVerificationPage'
 
 // User Pages
 import BookingPage from '../pages/BookingPage'
 import PaymentPage from '../pages/PaymentPage'
-import MyBookingsPage from '../pages/MyBookingsPage'
-import UserPaymentsPage from '../pages/UserPaymentsPage'
-import UserFavoritesPage from '../pages/UserFavoritesPage'
-import ProfilePage from '../pages/ProfilePage'
+import MyBookingsPage from '../pages/user/MyBookingsPage'
+import ProfilePage from '../pages/user/ProfilePage'
 
 // Dashboard Pages
 import AdminDashboard from '../pages/dashboard/AdminDashboard'
 import OwnerDashboard from '../pages/dashboard/OwnerDashboard'
-import UserDashboard from '../pages/dashboard/UserDashboard'
 
 // Owner Pages
-import OwnerCourtsPage from '../pages/OwnerCourtsPage'
-import OwnerBookingsPage from '../pages/OwnerBookingsPage'
-import OwnerProfilePage from '../pages/OwnerProfilePage'
+import OwnerCourtsPage from '../pages/owner/OwnerCourtsPage'
+import OwnerBookingsPage from '../pages/owner/OwnerBookingsPage'
+import OwnerProfilePage from '../pages/owner/OwnerProfilePage'
 
 // Admin Pages
-import AdminFacilitiesPage from '../pages/AdminFacilitiesPage'
-import AdminUsersPage from '../pages/AdminUsersPage'
-import AdminAnalyticsPage from '../pages/AdminAnalyticsPage'
-import AdminProfilePage from '../pages/AdminProfilePage'
+import AdminFacilitiesPage from '../pages/admin/AdminFacilitiesPage'
+import AdminUsersPage from '../pages/admin/AdminUsersPage'
+import AdminAnalyticsPage from '../pages/admin/AdminAnalyticsPage'
+import AdminProfilePage from '../pages/admin/AdminProfilePage'
 
 const AppRoutes = () => {
   const { isAuthenticated, user, loading } = useAuth()

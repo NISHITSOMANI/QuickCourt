@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { DashboardLoader } from '../components/LoadingSpinner'
+import { DashboardLoader } from '../components/ui/LoadingSpinner'
 import toast from 'react-hot-toast'
 
 const ProtectedRoute = ({

@@ -10,10 +10,10 @@ import {
   Star,
   MessageSquare
 } from 'lucide-react'
-import DashboardLayout from '../components/DashboardLayout'
-import { bookingApi } from '../api/bookingApi'
-import { userApi } from '../api/dashboardApi'
-import Pagination from '../components/Pagination'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { bookingApi } from '../../api/bookingApi'
+import { userApi } from '../../api/dashboardApi'
+import Pagination from '../../components/common/Pagination'
 import toast from 'react-hot-toast'
 
 const MyBookingsPage = () => {

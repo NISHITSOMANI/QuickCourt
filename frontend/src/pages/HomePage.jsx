@@ -12,22 +12,65 @@ import {
   Zap,
   Heart
 } from 'lucide-react'
-import SearchBar from '../components/SearchBar'
-import VenueCard from '../components/VenueCard'
-import SportsCategories from '../components/SportsCategories'
+import SearchBar from '../components/common/SearchBar'
+import VenueCard from '../components/venues/VenueCard'
+import SportsCategories from '../components/common/SportsCategories'
 import { venueApi } from '../api/venueApi'
 
 const HomePage = () => {
   const navigate = useNavigate()
 
-  // Fetch popular venues
-  const { data: popularVenues, isLoading: loadingVenues } = useQuery(
+  // Fetch popular venues with proper error handling
+  const { 
+    data: popularVenues, 
+    isLoading: loadingVenues, 
+    error: venuesError 
+  } = useQuery(
     'popularVenues',
-    () => venueApi.getPopularVenues(6),
+    async () => {
+      try {
+        const response = await venueApi.getPopularVenues(6)
+        // Ensure the response matches the expected format
+        return {
+          venues: Array.isArray(response?.data?.venues) 
+            ? response.data.venues 
+            : Array.isArray(response?.data)
+              ? response.data
+              : []
+        }
+      } catch (error) {
+        console.error('Error fetching popular venues:', error)
+        throw error
+      }
+    },
     {
-      select: (response) => response.data.venues || [],
+      select: (response) => response.venues || [],
+      retry: 1,
+      refetchOnWindowFocus: false
     }
   )
+
+  // Handle error state
+  if (venuesError && !popularVenues?.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600 mb-2">
+            Failed to load venues
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {venuesError.message || 'Please try again later'}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const handleSearch = (searchData) => {
     const queryParams = new URLSearchParams()
@@ -146,15 +189,34 @@ const HomePage = () => {
 
           {loadingVenues ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="bg-gray-200 rounded-lg h-80 animate-pulse"></div>
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse bg-gray-200 rounded-lg h-80" />
               ))}
             </div>
-          ) : (
+          ) : popularVenues?.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {popularVenues?.map((venue) => (
-                <VenueCard key={venue._id} venue={venue} />
-              ))}
+              {popularVenues.map((venue) => {
+                // Ensure venue has required fields
+                const venueData = {
+                  _id: venue._id || venue.id,
+                  name: venue.name || 'Unnamed Venue',
+                  description: venue.description || '',
+                  address: venue.address || 'Address not available',
+                  shortLocation: venue.shortLocation || venue.location || 'Location not available',
+                  images: Array.isArray(venue.images) ? venue.images : [],
+                  sports: Array.isArray(venue.sports) ? venue.sports : [],
+                  startingPrice: venue.startingPrice || venue.pricePerHour || 0,
+                  rating: venue.rating || 0,
+                  reviewCount: venue.reviewCount || 0,
+                  amenities: Array.isArray(venue.amenities) ? venue.amenities : [],
+                  operatingHours: venue.operatingHours || {}
+                }
+                return <VenueCard key={venueData._id} venue={venueData} />
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-600">No popular venues found. Check back later!</p>
             </div>
           )}
         </div>

@@ -6,7 +6,6 @@ import {
   Building2,
   Calendar,
   DollarSign,
-  TrendingUp,
   AlertCircle,
   CheckCircle,
   Clock,
@@ -14,10 +13,10 @@ import {
   Shield,
   BarChart3
 } from 'lucide-react'
-import DashboardLayout from '../../components/DashboardLayout'
-import { RevenueChart, UserActivityChart, VenueDistributionChart } from '../../components/AnalyticsChart'
-import { SkeletonCard, SkeletonChart } from '../../components/LoadingSpinner'
-import ErrorBoundary, { ComponentErrorFallback } from '../../components/ErrorBoundary'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { RevenueChart, UserActivityChart, VenueDistributionChart } from '../../components/dashboard/AnalyticsChart'
+import { SkeletonCard, SkeletonChart } from '../../components/ui/LoadingSpinner'
+import ErrorBoundary, { ComponentErrorFallback } from '../../components/common/ErrorBoundary'
 import { adminApi } from '../../api/dashboardApi'
 
 const AdminDashboard = () => {

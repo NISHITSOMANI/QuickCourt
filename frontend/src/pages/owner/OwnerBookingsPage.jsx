@@ -11,11 +11,11 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react'
-import DashboardLayout from '../components/DashboardLayout'
-import { bookingApi } from '../api/bookingApi'
-import { venueApi } from '../api/venueApi'
-import { ownerApi } from '../api/dashboardApi'
-import Pagination from '../components/Pagination'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { bookingApi } from '../../api/bookingApi'
+import { venueApi } from '../../api/venueApi'
+import { ownerApi } from '../../api/dashboardApi'
+import Pagination from '../../components/common/Pagination'
 import toast from 'react-hot-toast'
 
 const OwnerBookingsPage = () => {

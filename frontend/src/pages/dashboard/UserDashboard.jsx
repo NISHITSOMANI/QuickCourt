@@ -14,8 +14,8 @@ import {
   Trophy,
   Heart
 } from 'lucide-react'
-import DashboardLayout from '../../components/DashboardLayout'
-import { userApi } from '../../api/dashboardApi'
+import DashboardLayout from '../../../components/dashboard/DashboardLayout'
+import { userApi } from '../../../api/dashboardApi'
 
 const UserDashboard = () => {
   const [dateRange, setDateRange] = useState('30') // days

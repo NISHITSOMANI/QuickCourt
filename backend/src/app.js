@@ -34,42 +34,67 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// Defensive CORS configuration (won't throw if config missing)
-const allowedOriginsRaw = (config.cors && config.cors.allowedOrigins) ? String(config.cors.allowedOrigins) : '';
-const allowedOrigins = allowedOriginsRaw
-  ? allowedOriginsRaw.split(',').map(s => s.trim()).filter(Boolean)
-  : [];
-
-if (allowedOrigins.length === 0) {
-  logger.warn('CORS: no allowed origins configured (config.cors.allowedOrigins is empty). Allowing requests with no origin (Postman/server).');
-}
-
+// CORS configuration
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (Postman, curl, server-to-server, native apps)
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-
-    // Always allow localhost & 127.0.0.1 in dev
-    if (
-      origin.includes('localhost') ||
-      origin.includes('127.0.0.1')
-    ) {
+    
+    // Development environment - allow all localhost and 127.0.0.1 origins
+    if (process.env.NODE_ENV === 'development') {
+      if (
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1') ||
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('https://localhost:') ||
+        origin.startsWith('http://127.0.0.1:') ||
+        origin.startsWith('https://127.0.0.1:')
+      ) {
+        return callback(null, true);
+      }
       return callback(null, true);
     }
-
-    // Allow wildcard if configured
-    if (allowedOrigins.includes('*')) return callback(null, true);
-
-    // Exact match
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-
-    // Not allowed
+    
+    // Log blocked origins for debugging
+    console.warn(`Blocked CORS request from origin: ${origin}`);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'X-XSRF-TOKEN',
+    'x-request-timestamp',
+    'X-Request-Timestamp',
+    'Cache-Control',
+    'Pragma',
+    'If-Modified-Since',
+    'x-access-token',
+    'x-refresh-token',
+    'X-Request-ID',
+    'X-HTTP-Method-Override',
+    'Accept-Version',
+    'Content-Length',
+    'X-API-Version',
+    'X-Response-Time',
+    'X-Forwarded-For',
+    'X-Forwarded-Proto',
+    'X-Real-IP'
+  ],
+  exposedHeaders: [
+    'X-Total-Count',
+    'X-Page-Count',
+    'X-RateLimit-Limit',
+    'X-RateLimit-Remaining',
+    'X-RateLimit-Reset',
+    'Retry-After'
+  ],
+  maxAge: 86400, // 24 hours
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
 
 

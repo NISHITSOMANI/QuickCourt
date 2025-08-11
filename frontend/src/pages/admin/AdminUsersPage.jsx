@@ -11,9 +11,9 @@ import {
   Mail,
   Calendar
 } from 'lucide-react'
-import DashboardLayout from '../components/DashboardLayout'
-import Pagination from '../components/Pagination'
-import { adminApi } from '../api/dashboardApi'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import Pagination from '../../components/common/Pagination'
+import { adminApi } from '../../api/dashboardApi'
 import toast from 'react-hot-toast'
 
 const AdminUsersPage = () => {
@@ -23,58 +23,53 @@ const AdminUsersPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const queryClient = useQueryClient()
 
-  // Mock data - replace with actual API calls
-  const mockUsers = {
-    users: [
-      {
-        _id: '1',
-        name: 'John Doe',
-        email: 'john@example.com',
-        role: 'user',
-        status: 'active',
-        joinDate: '2024-01-15',
-        lastLogin: '2024-01-20',
-        bookingsCount: 15
-      },
-      {
-        _id: '2',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        role: 'owner',
-        status: 'active',
-        joinDate: '2024-01-10',
-        lastLogin: '2024-01-19',
-        venuesCount: 3
-      },
-      {
-        _id: '3',
-        name: 'Bob Wilson',
-        email: 'bob@example.com',
-        role: 'user',
-        status: 'suspended',
-        joinDate: '2024-01-05',
-        lastLogin: '2024-01-18',
-        bookingsCount: 8
+  // Fetch users data from backend
+  const { data, isLoading, error } = useQuery(
+    ['admin-users', currentPage, roleFilter, statusFilter, searchQuery],
+    async () => {
+      try {
+        const response = await adminApi.getUsers({
+          page: currentPage,
+          limit: 10,
+          role: roleFilter,
+          status: statusFilter,
+          search: searchQuery
+        })
+        return response.data
+      } catch (error) {
+        console.error('Error fetching users:', error)
+        toast.error('Failed to load users data')
+        throw error
       }
-    ],
-    totalPages: 1,
-    total: 3
-  }
+    },
+    {
+      keepPreviousData: true,
+      refetchOnWindowFocus: false,
+      onError: (error) => {
+        console.error('Users query error:', error)
+      }
+    }
+  )
 
-  const data = mockUsers
-  const isLoading = false
-  const error = null
-
-  // Update user status mutation (mock)
+  // Update user status mutation
   const updateUserStatusMutation = useMutation(
-    ({ userId, status }) => Promise.resolve({ userId, status }),
+    async ({ userId, status }) => {
+      try {
+        const response = await adminApi.updateUserStatus(userId, { status })
+        return response.data
+      } catch (error) {
+        console.error('Error updating user status:', error)
+        throw error
+      }
+    },
     {
       onSuccess: () => {
         toast.success('User status updated successfully')
         queryClient.invalidateQueries('admin-users')
       },
       onError: (error) => {
-        toast.error('Failed to update user status')
+        const errorMessage = error.response?.data?.message || 'Failed to update user status'
+        toast.error(errorMessage)
       }
     }
   )

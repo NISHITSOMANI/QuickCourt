@@ -13,8 +13,8 @@ import {
   Search,
   Filter
 } from 'lucide-react'
-import DashboardLayout from '../components/DashboardLayout'
-import { userApi } from '../api/dashboardApi'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { userApi } from '../../api/dashboardApi'
 import toast from 'react-hot-toast'
 
 const UserFavoritesPage = () => {
@@ -22,56 +22,29 @@ const UserFavoritesPage = () => {
   const [sportFilter, setSportFilter] = useState('')
   const queryClient = useQueryClient()
 
-  // Mock data - replace with actual API calls when backend is ready
-  const mockFavorites = {
-    favorites: [
-      {
-        id: '1',
-        venueId: 'venue_1',
-        name: 'Sports Complex A',
-        location: 'Downtown, City Center',
-        sport: 'Badminton',
-        rating: 4.8,
-        priceRange: '$40-60/hour',
-        image: '/api/placeholder/300/200',
-        totalBookings: 8,
-        lastVisit: '2024-01-10',
-        amenities: ['Parking', 'Changing Room', 'Water'],
-        distance: '2.5 km',
-        availability: 'Available Today'
-      },
-      {
-        id: '2',
-        venueId: 'venue_2',
-        name: 'Tennis Club B',
-        location: 'Uptown, Sports District',
-        sport: 'Tennis',
-        rating: 4.6,
-        priceRange: '$60-80/hour',
-        image: '/api/placeholder/300/200',
-        totalBookings: 5,
-        lastVisit: '2024-01-08',
-        amenities: ['Parking', 'Pro Shop', 'Cafe'],
-        distance: '4.2 km',
-        availability: 'Available Tomorrow'
-      },
-      {
-        id: '3',
-        venueId: 'venue_3',
-        name: 'Fitness Center C',
-        location: 'Midtown, Business Area',
-        sport: 'Squash',
-        rating: 4.7,
-        priceRange: '$50-70/hour',
-        image: '/api/placeholder/300/200',
-        totalBookings: 3,
-        lastVisit: '2024-01-05',
-        amenities: ['Gym', 'Sauna', 'Parking'],
-        distance: '1.8 km',
-        availability: 'Fully Booked Today'
+  // Fetch user favorites from backend
+  const { data: favoritesData, isLoading, error } = useQuery(
+    ['user-favorites', searchQuery, sportFilter],
+    async () => {
+      try {
+        const response = await userApi.getFavorites({
+          search: searchQuery,
+          sport: sportFilter
+        })
+        return response.data
+      } catch (error) {
+        console.error('Error fetching favorites:', error)
+        toast.error('Failed to load favorite venues')
+        throw error
       }
-    ]
-  }
+    },
+    {
+      refetchOnWindowFocus: false,
+      onError: (error) => {
+        console.error('Favorites query error:', error)
+      }
+    }
+  )
 
   // Remove from favorites mutation
   const removeFromFavoritesMutation = useMutation(
@@ -93,12 +66,8 @@ const UserFavoritesPage = () => {
     }
   }
 
-  const filteredFavorites = mockFavorites.favorites.filter(venue => {
-    const matchesSearch = venue.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         venue.location.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesSport = !sportFilter || venue.sport === sportFilter
-    return matchesSearch && matchesSport
-  })
+  // Use backend data or empty array as fallback
+  const favorites = favoritesData?.favorites || []
 
   const getAvailabilityColor = (availability) => {
     if (availability.includes('Available')) {
@@ -204,9 +173,22 @@ const UserFavoritesPage = () => {
       </div>
 
       {/* Favorites Grid */}
-      {filteredFavorites.length > 0 ? (
+      {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredFavorites.map((venue) => (
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="h-48 bg-gray-200 animate-pulse"></div>
+              <div className="p-6 space-y-3">
+                <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : favorites.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {favorites.map((venue) => (
             <div key={venue.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
               {/* Venue Image */}
               <div className="relative h-48 bg-gray-200">

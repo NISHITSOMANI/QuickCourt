@@ -63,19 +63,19 @@ const LandingPage = () => {
       title: "The Science Behind Sports and Mental Health",
       excerpt: "Discover how regular physical activity through sports can significantly improve your mental well-being and cognitive function.",
       readTime: "5 min read",
-      image: "/api/placeholder/400/250"
+      image: "https://via.placeholder.com/400x250"
     },
     {
       title: "Building Community Through Sports",
       excerpt: "Learn how sports bring people together, create lasting bonds, and strengthen communities across the globe.",
       readTime: "4 min read",
-      image: "/api/placeholder/400/250"
+      image: "https://via.placeholder.com/400x250"
     },
     {
       title: "From Beginner to Pro: Your Sports Journey",
       excerpt: "A comprehensive guide to starting your sports journey, setting goals, and achieving your athletic potential.",
       readTime: "7 min read",
-      image: "/api/placeholder/400/250"
+      image: "https://via.placeholder.com/400x250"
     }
   ]
 

@@ -10,79 +10,52 @@ import {
   Filter,
   RefreshCw
 } from 'lucide-react'
-import DashboardLayout from '../components/DashboardLayout'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { 
   RevenueChart, 
   UserActivityChart, 
   VenueDistributionChart, 
   BookingsChart,
   PerformanceChart 
-} from '../components/AnalyticsChart'
-import { SkeletonChart } from '../components/LoadingSpinner'
-import ErrorBoundary, { ComponentErrorFallback } from '../components/ErrorBoundary'
-import { adminApi } from '../api/dashboardApi'
+} from '../../components/dashboard/AnalyticsChart'
+import { SkeletonChart } from '../../components/ui/LoadingSpinner'
+import ErrorBoundary, { ComponentErrorFallback } from '../../components/common/ErrorBoundary'
+import { adminApi } from '../../api/dashboardApi'
 
 const AdminAnalyticsPage = () => {
   const [dateRange, setDateRange] = useState('30')
   const [refreshing, setRefreshing] = useState(false)
 
-  // Mock analytics data - replace with actual API calls
-  const analyticsData = {
-    overview: {
-      totalRevenue: 125000,
-      totalUsers: 1250,
-      totalVenues: 85,
-      totalBookings: 3420,
-      revenueGrowth: 18.7,
-      userGrowth: 15.3,
-      venueGrowth: 8.1,
-      bookingGrowth: 22.5
+  // Fetch analytics data from backend
+  const { data: analyticsData, isLoading, error, refetch } = useQuery(
+    ['admin-analytics', dateRange],
+    async () => {
+      try {
+        const response = await adminApi.getAnalytics({
+          dateRange: parseInt(dateRange),
+          includeCharts: true
+        })
+        return response.data
+      } catch (error) {
+        console.error('Error fetching analytics:', error)
+        throw error
+      }
     },
-    charts: {
-      revenue: [
-        { month: 'Jan', revenue: 45000, target: 40000 },
-        { month: 'Feb', revenue: 52000, target: 45000 },
-        { month: 'Mar', revenue: 48000, target: 50000 },
-        { month: 'Apr', revenue: 61000, target: 55000 },
-        { month: 'May', revenue: 55000, target: 60000 },
-        { month: 'Jun', revenue: 67000, target: 65000 }
-      ],
-      userActivity: [
-        { date: 'Week 1', newUsers: 45, activeUsers: 890, bookings: 234 },
-        { date: 'Week 2', newUsers: 52, activeUsers: 945, bookings: 267 },
-        { date: 'Week 3', newUsers: 38, activeUsers: 912, bookings: 245 },
-        { date: 'Week 4', newUsers: 61, activeUsers: 1023, bookings: 289 }
-      ],
-      venueDistribution: [
-        { name: 'Badminton', count: 35, percentage: 41.2 },
-        { name: 'Tennis', count: 25, percentage: 29.4 },
-        { name: 'Basketball', count: 15, percentage: 17.6 },
-        { name: 'Football', count: 10, percentage: 11.8 }
-      ],
-      bookingTrends: [
-        { date: 'Mon', bookings: 89, cancellations: 12 },
-        { date: 'Tue', bookings: 76, cancellations: 8 },
-        { date: 'Wed', bookings: 94, cancellations: 15 },
-        { date: 'Thu', bookings: 87, cancellations: 11 },
-        { date: 'Fri', bookings: 102, cancellations: 18 },
-        { date: 'Sat', bookings: 125, cancellations: 22 },
-        { date: 'Sun', bookings: 98, cancellations: 16 }
-      ],
-      performance: [
-        { metric: 'Conversion Rate', current: 85, previous: 78 },
-        { metric: 'User Retention', current: 92, previous: 89 },
-        { metric: 'Avg Session', current: 76, previous: 72 },
-        { metric: 'Satisfaction', current: 94, previous: 91 }
-      ]
+    {
+      refetchOnWindowFocus: false,
+      keepPreviousData: true
     }
-  }
+  )
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await refetch()
+    } catch (error) {
+      console.error('Error refreshing analytics:', error)
+    } finally {
       setRefreshing(false)
-    }, 1000)
+    }
   }
 
   const handleExport = () => {

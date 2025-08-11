@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from 'react-query'
 import { Search, SlidersHorizontal, Grid, List } from 'lucide-react'
-import VenueCard from '../components/VenueCard'
-import FilterPanel from '../components/FilterPanel'
-import Pagination from '../components/Pagination'
+import VenueCard from '../components/venues/VenueCard'
+import FilterPanel from '../components/common/FilterPanel'
+import Pagination from '../components/common/Pagination'
 import { venueApi } from '../api/venueApi'
 
 const VenuesPage = () => {
@@ -45,15 +45,52 @@ const VenuesPage = () => {
     return params
   }
 
-  // Fetch venues
-  const { data, isLoading, error } = useQuery(
+  // Fetch venues with enhanced error handling and data mapping
+  const { 
+    data: venuesData, 
+    isLoading, 
+    isError, 
+    error: venuesError,
+    isPreviousData 
+  } = useQuery(
     ['venues', buildQueryParams()],
-    () => venueApi.getVenues(buildQueryParams()),
+    async () => {
+      try {
+        const response = await venueApi.getVenues(buildQueryParams())
+        // Normalize the response data structure
+        return {
+          venues: Array.isArray(response?.data?.venues) 
+            ? response.data.venues 
+            : Array.isArray(response?.data)
+              ? response.data
+              : [],
+          total: response?.data?.total || 0,
+          totalPages: response?.data?.totalPages || 1,
+          currentPage: response?.data?.currentPage || 1
+        }
+      } catch (error) {
+        console.error('Error fetching venues:', error)
+        throw error
+      }
+    },
     {
-      select: (response) => response.data,
+      select: (response) => ({
+        venues: response.venues || [],
+        total: response.total,
+        totalPages: response.totalPages,
+        currentPage: response.currentPage
+      }),
       keepPreviousData: true,
+      refetchOnWindowFocus: false,
+      retry: 1,
+      onError: (error) => {
+        console.error('Failed to fetch venues:', error)
+      }
     }
   )
+
+  // Extract normalized data
+  const { venues = [], total = 0, totalPages = 1, currentPage: currentPageFromApi = 1 } = venuesData || {}
 
   // Update URL when filters change
   useEffect(() => {
@@ -110,140 +147,132 @@ const VenuesPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Find Sports Venues</h1>
-          
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search venues, sports, or locations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-            </div>
-          </form>
-
-          {/* Controls */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Sort by:</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  {sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {data && (
-                <span className="text-sm text-gray-600">
-                  {data.total} venues found
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md ${
-                    viewMode === 'grid'
-                      ? 'bg-primary-100 text-primary-600'
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  <Grid className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md ${
-                    viewMode === 'list'
-                      ? 'bg-primary-100 text-primary-600'
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  <List className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="text-sm text-gray-500">
-                Page {currentPage} of {data?.totalPages || 1}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar */}
-          <div className="lg:w-80 flex-shrink-0">
-            <FilterPanel
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Filters */}
+          <div className="w-full md:w-64 flex-shrink-0">
+            <FilterPanel 
               filters={filters}
-              onFiltersChange={handleFiltersChange}
+              onChange={handleFiltersChange}
               onClear={handleClearFilters}
             />
           </div>
-
+          
           {/* Main Content */}
           <div className="flex-1">
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array.from({ length: 9 }).map((_, index) => (
-                  <div key={index} className="bg-gray-200 rounded-lg h-80 animate-pulse"></div>
-                ))}
-              </div>
-            ) : error ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Error loading venues. Please try again.</p>
-              </div>
-            ) : data?.venues?.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg mb-4">No venues found matching your criteria.</p>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">Find Sports Venues</h1>
+            </div>
+            
+            {/* Search and View Toggle */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+              <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    placeholder="Search venues..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </form>
+              
+              <div className="flex items-center space-x-2">
                 <button
-                  onClick={handleClearFilters}
-                  className="text-primary-600 hover:text-primary-700 font-medium"
+                  type="button"
+                  className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-gray-200 text-gray-700' : 'text-gray-400 hover:text-gray-500'}`}
+                  onClick={() => setViewMode('grid')}
+                  title="Grid view"
                 >
-                  Clear filters and try again
+                  <Grid className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-gray-200 text-gray-700' : 'text-gray-400 hover:text-gray-500'}`}
+                  onClick={() => setViewMode('list')}
+                  title="List view"
+                >
+                  <List className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  className="md:hidden p-2 text-gray-400 hover:text-gray-500"
+                  onClick={() => {
+                    const filters = document.getElementById('filters');
+                    if (filters) filters.classList.toggle('hidden');
+                  }}
+                  title="Filters"
+                >
+                  <SlidersHorizontal className="h-5 w-5" />
                 </button>
               </div>
-            ) : (
+            </div>
+            
+            {/* Loading State */}
+            {isLoading && !isPreviousData && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="animate-pulse bg-gray-200 rounded-lg h-80" />
+                ))}
+              </div>
+            )}
+            
+            {/* Empty State */}
+            {!isLoading && !isError && venues.length === 0 && (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-medium text-gray-900 mb-1">No venues found</h3>
+                <p className="text-gray-500 mb-4">Try adjusting your search or filter criteria.</p>
+                <button
+                  onClick={handleClearFilters}
+                  className="text-primary-600 hover:text-primary-800 font-medium"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+            
+            {/* Venues Grid/List */}
+            {!isLoading && !isError && venues.length > 0 && (
               <>
-                {/* Venues Grid/List */}
-                <div className={`
-                  ${viewMode === 'grid' 
-                    ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' 
-                    : 'space-y-6'
-                  }
-                `}>
-                  {data?.venues?.map((venue) => (
-                    <VenueCard 
-                      key={venue._id} 
-                      venue={venue}
-                      className={viewMode === 'list' ? 'flex' : ''}
-                    />
-                  ))}
+                <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}`}>
+                  {venues.map((venue) => {
+                    // Ensure venue has required fields
+                    const venueData = {
+                      _id: venue._id || venue.id,
+                      name: venue.name || 'Unnamed Venue',
+                      description: venue.description || '',
+                      address: venue.address || 'Address not available',
+                      shortLocation: venue.shortLocation || venue.location || 'Location not available',
+                      images: Array.isArray(venue.images) ? venue.images : [],
+                      sports: Array.isArray(venue.sports) ? venue.sports : [],
+                      startingPrice: venue.startingPrice || venue.pricePerHour || 0,
+                      rating: venue.rating || 0,
+                      reviewCount: venue.reviewCount || 0,
+                      amenities: Array.isArray(venue.amenities) ? venue.amenities : [],
+                      operatingHours: venue.operatingHours || {}
+                    }
+                    return (
+                      <VenueCard 
+                        key={venueData._id} 
+                        venue={venueData} 
+                        viewMode={viewMode} 
+                      />
+                    )
+                  })}
                 </div>
-
+                
                 {/* Pagination */}
-                {data?.totalPages > 1 && (
-                  <div className="mt-8">
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={data.totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                )}
+                <div className="mt-8">
+                  <Pagination
+                    currentPage={currentPageFromApi}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    className="flex justify-center"
+                  />
+                </div>
               </>
             )}
           </div>

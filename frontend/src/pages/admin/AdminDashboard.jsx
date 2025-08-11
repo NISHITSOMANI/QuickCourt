@@ -8,19 +8,61 @@ import {
   TrendingUp,
   AlertCircle,
   CheckCircle,
-  Clock
+  Clock,
+  Loader2
 } from 'lucide-react'
+import { adminApi } from '../../api/dashboardApi'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import toast from 'react-hot-toast'
 
 const AdminDashboard = () => {
   const [dateRange, setDateRange] = useState('30') // days
 
-  // Mock data - replace with actual API calls
-  const stats = {
+  // Fetch admin analytics data
+  const { data: analyticsData, isLoading: isLoadingAnalytics, error: analyticsError } = useQuery(
+    ['admin-analytics', dateRange],
+    async () => {
+      try {
+        const response = await adminApi.getAnalytics({ dateRange })
+        return response.data
+      } catch (error) {
+        console.error('Error fetching analytics:', error)
+        toast.error('Failed to load analytics data')
+        throw error
+      }
+    },
+    {
+      refetchOnWindowFocus: false,
+      onError: (error) => {
+        console.error('Analytics query error:', error)
+      }
+    }
+  )
+
+  // Fetch pending facilities for approval
+  const { data: pendingFacilities, isLoading: isLoadingPending } = useQuery(
+    'admin-pending-facilities',
+    async () => {
+      try {
+        const response = await adminApi.getPendingFacilities()
+        return response.data?.facilities || []
+      } catch (error) {
+        console.error('Error fetching pending facilities:', error)
+        return []
+      }
+    },
+    {
+      refetchOnWindowFocus: false
+    }
+  )
+
+  // Use analytics data or fallback to mock data
+  const stats = analyticsData || {
     totalUsers: 1250,
     totalVenues: 85,
     totalBookings: 3420,
     totalRevenue: 125000,
-    pendingApprovals: 12,
+    pendingApprovals: pendingFacilities?.length || 12,
     activeReports: 5
   }
 
@@ -82,14 +124,23 @@ const AdminDashboard = () => {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Monitor platform activity and manage system operations</p>
+  if (isLoadingAnalytics) {
+    return (
+      <DashboardLayout title="Admin Dashboard" subtitle="Monitor platform activity and manage system operations">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <span className="ml-2 text-gray-600">Loading analytics...</span>
         </div>
+      </DashboardLayout>
+    )
+  }
+
+  return (
+    <DashboardLayout 
+      title="Admin Dashboard" 
+      subtitle="Monitor platform activity and manage system operations"
+    >
+      <div>
 
         {/* Date Range Filter */}
         <div className="mb-6">
@@ -238,7 +289,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
 

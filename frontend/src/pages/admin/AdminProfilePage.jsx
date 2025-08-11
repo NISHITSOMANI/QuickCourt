@@ -13,8 +13,8 @@ import {
   Settings,
   Lock
 } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
-import { profileApi } from '../api/profileApi'
+import { useAuth } from '../../context/AuthContext'
+import { profileApi } from '../../api/profileApi'
 import toast from 'react-hot-toast'
 
 const AdminProfilePage = () => {

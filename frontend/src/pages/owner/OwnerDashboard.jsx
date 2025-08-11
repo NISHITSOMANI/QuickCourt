@@ -8,10 +8,13 @@ import {
   TrendingUp,
   Building2,
   Clock,
-  Star
+  Star,
+  Loader2
 } from 'lucide-react'
-import { profileApi } from '../api/profileApi'
-import { venueApi } from '../api/venueApi'
+import { profileApi } from '../../api/profileApi'
+import { venueApi } from '../../api/venueApi'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import toast from 'react-hot-toast'
 
 const OwnerDashboard = () => {
   const [dateRange, setDateRange] = useState('7') // days
@@ -81,14 +84,23 @@ const OwnerDashboard = () => {
     }
   ]
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Owner Dashboard</h1>
-          <p className="text-gray-600 mt-2">Monitor your venues and track performance</p>
+  if (statsLoading || venuesLoading || earningsLoading) {
+    return (
+      <DashboardLayout title="Owner Dashboard" subtitle="Monitor your venues and track performance">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <span className="ml-2 text-gray-600">Loading dashboard...</span>
         </div>
+      </DashboardLayout>
+    )
+  }
+
+  return (
+    <DashboardLayout 
+      title="Owner Dashboard" 
+      subtitle="Monitor your venues and track performance"
+    >
+      <div>
 
         {/* Date Range Filter */}
         <div className="mb-6">
@@ -231,7 +243,7 @@ const OwnerDashboard = () => {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
 

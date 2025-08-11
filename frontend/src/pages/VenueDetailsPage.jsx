@@ -16,45 +16,104 @@ import {
   Mail
 } from 'lucide-react'
 import { venueApi } from '../api/venueApi'
+import { reviewApi } from '../api/reviewApi'
 import { useAuth } from '../context/AuthContext'
 import { useBooking } from '../context/BookingContext'
-import VenueMap from '../components/VenueMap'
-import PaymentMethodModal from '../components/PaymentMethodModal'
+import VenueMap from '../components/venues/VenueMap'
+import PaymentMethodModal from '../components/ui/PaymentMethodModal'
+import ReviewForm from '../components/ui/ReviewForm'
+import ErrorBoundary from '../components/common/ErrorBoundary'
 
 const VenueDetailsPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
-  const { setVenue } = useBooking()
+  const { setVenue: setBookingVenue } = useBooking()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [venue, setVenueData] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [venue, setVenueState] = useState(null)
 
-  // Fetch venue data with manual state management to avoid React Query issues
-  useEffect(() => {
-    const fetchVenue = async () => {
-      if (!id) return
-
+  // Fetch venue data with React Query for better data handling
+  const { data: venueData, isLoading, error: venueError } = useQuery(
+    ['venue', id],
+    async () => {
+      if (!id) return null;
       try {
-        setIsLoading(true)
-        setError(null)
-        const response = await venueApi.getVenueById(id)
-        const venueData = response?.data?.venue || response?.data
-        setVenueData(venueData)
-      } catch (err) {
-        setError(err)
-      } finally {
-        setIsLoading(false)
+        const response = await venueApi.getVenueById(id);
+        // Normalize the venue data structure
+        const data = response?.data?.venue || response?.data || {};
+        return {
+          id: data._id || data.id || id,
+          name: data.name || 'Unnamed Venue',
+          description: data.description || '',
+          address: data.address || 'Address not available',
+          location: data.location || {},
+          shortLocation: data.shortLocation || data.location?.formattedAddress || 'Location not available',
+          images: Array.isArray(data.images) ? data.images : [],
+          sports: Array.isArray(data.sports) ? data.sports : [],
+          pricePerHour: data.pricePerHour || 0,
+          rating: data.rating || 0,
+          reviewCount: data.reviewCount || 0,
+          amenities: Array.isArray(data.amenities) ? data.amenities : [],
+          operatingHours: data.operatingHours || {},
+          contact: data.contact || {},
+          capacity: data.capacity || 0,
+          rules: data.rules || [],
+          facilities: data.facilities || []
+        };
+      } catch (error) {
+        console.error('Error fetching venue details:', error);
+        throw error;
+      }
+    },
+    {
+      enabled: !!id,
+      refetchOnWindowFocus: false,
+      retry: 1,
+      onError: (error) => {
+        console.error('Failed to fetch venue:', error);
+      },
+      onSuccess: (data) => {
+        if (data) {
+          setVenueData(data);
+          setVenue(data); // Update booking context if needed
+        }
       }
     }
+  );
 
-    fetchVenue()
-  }, [id])
+  // Update local state and booking context when venue data changes
+  useEffect(() => {
+    if (venueData) {
+      setVenueState(venueData);
+      setBookingVenue(venueData);
+    }
+  }, [venueData, setBookingVenue])
 
-  // Simplified - no additional queries for now
+  // Fetch venue reviews using the new reviewApi
+  const { data: reviewsData, isLoading: isLoadingReviews, error: reviewsError } = useQuery(
+    ['venue-reviews', id],
+    async () => {
+      if (!id) return [];
+      try {
+        const response = await reviewApi.getVenueReviews(id, { page: 1, limit: 10, sort: '-createdAt' });
+        return response?.data?.reviews || response?.data || [];
+      } catch (error) {
+        console.error('Error fetching venue reviews:', error);
+        throw error;
+      }
+    },
+    {
+      enabled: !!id,
+      refetchOnWindowFocus: false,
+      retry: 1,
+      onError: (error) => {
+        console.error('Failed to fetch venue reviews:', error);
+      }
+    }
+  );
+
   const courts = []
-  const reviews = []
 
   const handleBookNow = () => {
     if (!isAuthenticated) {
@@ -255,32 +314,57 @@ const VenueDetailsPage = () => {
             )}
 
             {/* Reviews */}
-            {reviews?.length > 0 && (
+            {isLoadingReviews ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : reviewsError ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600">Failed to load reviews. Please try again later.</p>
+              </div>
+            ) : reviewsData?.length > 0 ? (
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Recent Reviews</h2>
                 <div className="space-y-4">
-                  {reviews.map((review) => (
-                    <div key={review._id} className="bg-white rounded-lg border border-gray-200 p-4">
+                  {reviewsData.map((review) => (
+                    <div key={review._id || review.id} className="bg-white rounded-lg border border-gray-200 p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
                           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                             <span className="text-blue-600 font-medium text-sm">
-                              {review.user?.name?.charAt(0)}
+                              {review.user?.name?.charAt(0) || 'U'}
                             </span>
                           </div>
-                          <span className="font-medium text-gray-900">{review.user?.name}</span>
+                          <span className="font-medium text-gray-900">{review.user?.name || 'Anonymous'}</span>
                         </div>
                         <div className="flex items-center">
-                          {renderStars(review.rating)}
+                          {renderStars(review.rating || 0)}
                         </div>
                       </div>
                       {review.title && (
                         <h4 className="font-medium text-gray-900 mb-1">{review.title}</h4>
                       )}
-                      <p className="text-gray-600 text-sm">{review.comment}</p>
+                      <p className="text-gray-600 text-sm">{review.comment || ''}</p>
+                      {review.createdAt && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-600 mb-4">No reviews yet. Be the first to review this venue!</p>
+                {isAuthenticated && (
+                  <button
+                    onClick={() => setShowReviewModal(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Write a Review
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -358,6 +442,14 @@ const VenueDetailsPage = () => {
           timeSlot: 'To be selected'
         }}
       />
+
+      {/* Review Form Modal */}
+      {showReviewModal && (
+        <ReviewForm
+          venueId={id}
+          onClose={() => setShowReviewModal(false)}
+        />
+      )}
     </div>
   )
 

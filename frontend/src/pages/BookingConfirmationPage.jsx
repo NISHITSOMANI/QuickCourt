@@ -1,133 +1,83 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, CreditCard, Shield, Clock, MapPin, Calendar } from 'lucide-react'
-import { useBooking } from '../context/BookingContext'
-import { useAuth } from '../context/AuthContext'
-import { bookingApi } from '../api/bookingApi'
+import { useMutation } from 'react-query'
+import { ArrowLeft, Clock, MapPin, Calendar, Users, DollarSign, CheckCircle } from 'lucide-react'
+import { useBooking } from '../../context/BookingContext'
+import { useAuth } from '../../context/AuthContext'
+import { bookingApi } from '../../api/bookingApi'
 import toast from 'react-hot-toast'
 
-const PaymentPage = () => {
+const BookingConfirmationPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
   const { selectedVenue, selectedCourt } = useBooking()
   
-  // Get booking data from navigation state
-  const bookingData = location.state?.bookingData
+  // Get booking data from navigation state or booking context
+  const bookingData = location.state?.bookingData || {
+    venue: selectedVenue,
+    court: selectedCourt,
+    ...location.state
+  }
   
-  const [paymentMethod, setPaymentMethod] = useState('card')
-  const [cardDetails, setCardDetails] = useState({
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    cardholderName: ''
-  })
-  const [isProcessing, setIsProcessing] = useState(false)
-
   useEffect(() => {
-    console.log('PaymentPage loaded successfully')
+    console.log('BookingConfirmationPage loaded successfully')
     console.log('Booking data received:', bookingData)
     console.log('Location state:', location.state)
 
-    // Don't redirect if no booking data for now - just show a message
-    if (!bookingData) {
+    // Redirect if no booking data
+    if (!bookingData || !bookingData.venue || !bookingData.court) {
       console.log('No booking data found')
-      // toast.error('No booking data found')
-      // navigate('/booking')
-      // return
+      toast.error('No booking data found. Please start from venue selection.')
+      navigate('/venues')
+      return
     }
   }, [bookingData, navigate, location.state])
 
-  const handleCardInputChange = (field, value) => {
-    setCardDetails(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }
-
-  const formatCardNumber = (value) => {
-    // Remove all non-digits
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
-    // Add spaces every 4 digits
-    const matches = v.match(/\d{4,16}/g)
-    const match = matches && matches[0] || ''
-    const parts = []
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4))
+  // Create booking mutation
+  const { mutate: createBooking, isLoading: isSubmittingBooking } = useMutation(
+    async (bookingData) => {
+      try {
+        const response = await bookingApi.createBooking(bookingData)
+        return response.data
+      } catch (error) {
+        console.error('Booking creation failed:', error)
+        throw error
+      }
+    },
+    {
+      onSuccess: (data) => {
+        toast.success('Booking created successfully!')
+        // Navigate to payment gateway with booking ID
+        navigate('/payment-gateway', { 
+          state: { 
+            bookingId: data.booking?._id || data._id,
+            bookingData: data.booking || data,
+            totalAmount: data.booking?.totalAmount || data.totalAmount
+          } 
+        })
+      },
+      onError: (error) => {
+        const errorMessage = error.response?.data?.message || 'Failed to create booking'
+        toast.error(errorMessage)
+      }
     }
-    if (parts.length) {
-      return parts.join(' ')
-    } else {
-      return v
-    }
-  }
+  )
 
-  const formatExpiryDate = (value) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
-    if (v.length >= 2) {
-      return v.substring(0, 2) + '/' + v.substring(2, 4)
-    }
-    return v
-  }
-
-  const handlePayment = async () => {
+  const handleConfirmBooking = async () => {
     if (!bookingData) {
       toast.error('No booking data found')
       return
     }
 
-    // Validate payment method
-    if (!paymentMethod) {
-      toast.error('Please select a payment method')
+    if (!user) {
+      toast.error('Please log in to make a booking')
+      navigate('/login', { state: { from: window.location.pathname } })
       return
     }
 
-    // Validate card details if card payment is selected
-    if (paymentMethod === 'card' || paymentMethod === 'credit_card' || paymentMethod === 'debit_card') {
-      if (!cardDetails.cardNumber || !cardDetails.expiryDate || !cardDetails.cvv || !cardDetails.cardholderName) {
-        toast.error('Please fill in all card details')
-        return
-      }
-    }
-
-    setIsProcessing(true)
-    try {
-      // Prepare payment data according to backend contract
-      const paymentData = {
-        paymentMethod: paymentMethod === 'card' ? 'credit_card' : paymentMethod
-      }
-
-      // Add card details if payment method is card-based
-      if (paymentMethod === 'card' || paymentMethod === 'credit_card' || paymentMethod === 'debit_card') {
-        paymentData.cardNumber = cardDetails.cardNumber.replace(/\s+/g, '')
-        paymentData.expiryDate = cardDetails.expiryDate
-        paymentData.cvv = cardDetails.cvv
-        paymentData.cardholderName = cardDetails.cardholderName
-      }
-
-      // Process payment for the booking
-      const response = await bookingApi.processPayment(bookingData._id, paymentData)
-      
-      if (response.data?.success) {
-        toast.success('Payment processed successfully!')
-        
-        // Navigate to booking confirmation or my bookings
-        navigate('/my-bookings', { 
-          state: { 
-            newBooking: response.data.booking || bookingData,
-            showSuccess: true 
-          } 
-        })
-      } else {
-        throw new Error('Payment processing failed')
-      }
-    } catch (error) {
-      console.error('Payment error:', error)
-      const errorMessage = error.response?.data?.message || error.message || 'Payment failed'
-      toast.error(errorMessage)
-    } finally {
-      setIsProcessing(false)
-    }
+    // Create the booking first, then proceed to payment
+    createBooking(bookingData)
   }
 
   if (!bookingData) {
@@ -164,8 +114,8 @@ const PaymentPage = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Payment</h1>
-          <p className="text-gray-600 mt-2">Complete your booking payment</p>
+          <h1 className="text-3xl font-bold text-gray-900">Booking Confirmation</h1>
+          <p className="text-gray-600 mt-2">Review your booking details before proceeding to payment</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

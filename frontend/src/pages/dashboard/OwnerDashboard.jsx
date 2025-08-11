@@ -13,9 +13,9 @@ import {
   Plus,
   Eye
 } from 'lucide-react'
-import DashboardLayout from '../../components/DashboardLayout'
-import { RevenueChart, BookingsChart } from '../../components/AnalyticsChart'
-import ErrorBoundary, { ComponentErrorFallback } from '../../components/ErrorBoundary'
+import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { RevenueChart, BookingsChart } from '../../components/dashboard/AnalyticsChart'
+import ErrorBoundary, { ComponentErrorFallback } from '../../components/common/ErrorBoundary'
 import { ownerApi } from '../../api/dashboardApi'
 
 const OwnerDashboard = () => {

@@ -33,7 +33,9 @@
       "get": {
         "summary": "Health check",
         "description": "Check if the API is running",
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "responses": {
           "200": {
             "description": "API is healthy",
@@ -52,7 +54,9 @@
       "post": {
         "summary": "Register a new user",
         "description": "Create a new user account",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -101,7 +105,9 @@
       "post": {
         "summary": "Login user",
         "description": "Authenticate user and return tokens",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -140,7 +146,9 @@
       "get": {
         "summary": "Get venues",
         "description": "Retrieve a list of venues with optional filters",
-        "tags": ["Venues"],
+        "tags": [
+          "Venues"
+        ],
         "parameters": [
           {
             "name": "q",
@@ -156,7 +164,18 @@
             "description": "Filter by sport",
             "schema": {
               "type": "string",
-              "enum": ["badminton", "tennis", "cricket", "football", "basketball", "volleyball", "squash", "table-tennis", "swimming", "gym"]
+              "enum": [
+                "badminton",
+                "tennis",
+                "cricket",
+                "football",
+                "basketball",
+                "volleyball",
+                "squash",
+                "table-tennis",
+                "swimming",
+                "gym"
+              ]
             }
           },
           {
@@ -205,7 +224,9 @@
       "post": {
         "summary": "Create venue",
         "description": "Create a new venue (owner/admin only)",
-        "tags": ["Venues"],
+        "tags": [
+          "Venues"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -259,7 +280,9 @@
       "post": {
         "summary": "Create booking",
         "description": "Create a new booking",
-        "tags": ["Bookings"],
+        "tags": [
+          "Bookings"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -311,7 +334,9 @@
       "get": {
         "summary": "Get user bookings",
         "description": "Retrieve bookings for the current user",
-        "tags": ["Bookings"],
+        "tags": [
+          "Bookings"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -324,7 +349,12 @@
             "description": "Filter by booking status",
             "schema": {
               "type": "string",
-              "enum": ["pending", "confirmed", "cancelled", "completed"]
+              "enum": [
+                "pending",
+                "confirmed",
+                "cancelled",
+                "completed"
+              ]
             }
           },
           {
@@ -377,7 +407,9 @@
       "get": {
         "summary": "Get specific booking",
         "description": "Retrieve detailed information about a specific booking",
-        "tags": ["Bookings"],
+        "tags": [
+          "Bookings"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -429,7 +461,9 @@
       "delete": {
         "summary": "Cancel booking",
         "description": "Cancel a specific booking (User can cancel their own bookings)",
-        "tags": ["Bookings"],
+        "tags": [
+          "Bookings"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -503,7 +537,9 @@
       "get": {
         "summary": "Get court availability",
         "description": "Retrieve availability slots for a specific court",
-        "tags": ["Courts"],
+        "tags": [
+          "Courts"
+        ],
         "parameters": [
           {
             "name": "courtId",
@@ -602,7 +638,9 @@
       "get": {
         "summary": "Get user profile",
         "description": "Retrieve the current user's profile information",
-        "tags": ["Profile"],
+        "tags": [
+          "Profile"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -634,7 +672,9 @@
       "put": {
         "summary": "Update user profile",
         "description": "Update the current user's profile information",
-        "tags": ["Profile"],
+        "tags": [
+          "Profile"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -701,7 +741,9 @@
       "get": {
         "summary": "Get all venues (Admin)",
         "description": "Retrieve all venues with optional filters (Admin only)",
-        "tags": ["Admin"],
+        "tags": [
+          "Admin"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -714,7 +756,11 @@
             "description": "Filter by venue status",
             "schema": {
               "type": "string",
-              "enum": ["pending", "approved", "rejected"]
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ]
             }
           },
           {
@@ -777,7 +823,9 @@
       "patch": {
         "summary": "Approve venue (Admin)",
         "description": "Approve a pending venue (Admin only)",
-        "tags": ["Admin"],
+        "tags": [
+          "Admin"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -841,8 +889,14 @@
       "get": {
         "summary": "Get all users (Admin)",
         "description": "Retrieve all users with optional filters (Admin only)",
-        "tags": ["Admin Users"],
-        "security": [{"bearerAuth": []}],
+        "tags": [
+          "Admin Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "role",
@@ -850,7 +904,11 @@
             "description": "Filter by user role",
             "schema": {
               "type": "string",
-              "enum": ["user", "owner", "admin"]
+              "enum": [
+                "user",
+                "owner",
+                "admin"
+              ]
             }
           },
           {
@@ -859,7 +917,11 @@
             "description": "Filter by user status",
             "schema": {
               "type": "string",
-              "enum": ["active", "inactive", "banned"]
+              "enum": [
+                "active",
+                "inactive",
+                "banned"
+              ]
             }
           },
           {
@@ -901,13 +963,1445 @@
                         "$ref": "#/components/schemas/User"
                       },
                       "users": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/User"
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      },
+                      "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Admin access required",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/admin/venues/{venueId}": {
+    "delete": {
+      "summary": "Delete venue (Admin)",
+      "description": "Delete any venue (Admin only)",
+      "tags": [
+        "Admin"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Venue deleted successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "message": {
+                    "type": "string",
+                    "example": "Venue deleted successfully"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Admin access required",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Venue not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/admin/venues/{venueId}/reject": {
+    "patch": {
+      "summary": "Reject venue (Admin)",
+      "description": "Reject a pending venue (Admin only)",
+      "tags": [
+        "Admin"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "type": "string",
+                  "example": "Insufficient documentation provided"
+                }
+              },
+              "required": [
+                "reason"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Venue rejected successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VenueResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Admin access required",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Venue not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/admin/users": {
+    "get": {
+      "summary": "Get all users (Admin)",
+      "description": "Retrieve all users with optional filters (Admin only)",
+      "tags": [
+        "Admin Users"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "role",
+          "in": "query",
+          "description": "Filter by user role",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "user",
+              "owner",
+              "admin"
+            ]
+          }
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "description": "Filter by user status",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "banned"
+            ]
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "description": "Page number",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "Items per page",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "List of users retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean"
+                  },
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "pagination": {
+                    "$ref": "#/components/schemas/Pagination"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "$ref": "#/components/responses/UnauthorizedError"
+        },
+        "403": {
+          "$ref": "#/components/responses/ForbiddenError"
+        }
+      }
+    }
+  },
+  "/admin/users/{userId}": {
+    "get": {
+      "summary": "Get user details (Admin)",
+      "description": "Retrieve detailed information about a specific user (Admin only)",
+      "tags": [
+        "Admin"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Admin access required",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "User not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    },
+    "put": {
+      "summary": "Update user (Admin)",
+      "description": "Update any user's information (Admin only)",
+      "tags": [
+        "Admin"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProfileUpdate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "User updated successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserResponse"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Admin access required",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "User not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete user (Admin)",
+      "description": "Delete any user account (Admin only)",
+      "tags": [
+        "Admin"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User deleted successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "message": {
+                    "type": "string",
+                    "example": "User deleted successfully"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Admin access required",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "User not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/owner/venues": {
+    "get": {
+      "summary": "Get owner's venues",
+      "description": "Retrieve all venues owned by the current user",
+      "tags": [
+        "Owner"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Venues retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VenuesResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    },
+    "post": {
+      "summary": "Create venue",
+      "description": "Create a new venue (Owner only)",
+      "tags": [
+        "Owner"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VenueCreate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Venue created successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VenueResponse"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/owner/venues/{venueId}": {
+    "get": {
+      "summary": "Get specific venue",
+      "description": "Retrieve detailed information about a specific venue owned by the current user",
+      "tags": [
+        "Owner"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Venue retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VenueResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Not the venue owner",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Venue not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    },
+    "put": {
+      "summary": "Update venue",
+      "description": "Update a venue owned by the current user",
+      "tags": [
+        "Owner"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VenueCreate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Venue updated successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VenueResponse"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Not the venue owner",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Venue not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete venue",
+      "description": "Delete a venue owned by the current user",
+      "tags": [
+        "Owner"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Venue deleted successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "message": {
+                    "type": "string",
+                    "example": "Venue deleted successfully"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Not the venue owner",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Venue not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/owner/venues/{venueId}/bookings": {
+    "get": {
+      "summary": "Get venue bookings",
+      "description": "Retrieve all bookings for a specific venue owned by the current user",
+      "tags": [
+        "Owner"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "description": "Filter by booking status",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "cancelled",
+              "completed"
+            ]
+          }
+        },
+        {
+          "name": "date",
+          "in": "query",
+          "description": "Filter by specific date",
+          "schema": {
+            "type": "string",
+            "format": "date",
+            "example": "2024-12-25"
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "description": "Page number",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "Items per page",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Bookings retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingsResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Not the venue owner",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Venue not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/owner/venues/{venueId}/courts": {
+    "post": {
+      "summary": "Add court to venue",
+      "description": "Add a new court to a venue (Owner only)",
+      "tags": [
+        "Owner"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "Court 1"
+                },
+                "sport": {
+                  "type": "string",
+                  "example": "Badminton"
+                },
+                "pricePerHour": {
+                  "type": "number",
+                  "example": 150
+                },
+                "description": {
+                  "type": "string",
+                  "example": "Premium court with synthetic surface"
+                }
+              },
+              "required": [
+                "name",
+                "sport",
+                "pricePerHour"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Court added successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VenueResponse"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Owner access required",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Venue not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/venues/{venueId}": {
+    "get": {
+      "summary": "Get venue details",
+      "description": "Retrieve detailed information about a specific venue",
+      "tags": [
+        "Venues"
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Venue retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VenueResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Venue not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/owner/venues/{venueId}/courts/{courtId}": {
+    "put": {
+      "summary": "Update court",
+      "description": "Update a court in a venue owned by the current user",
+      "tags": [
+        "Owner"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "courtId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CourtCreate"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Court updated successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VenueResponse"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Not the venue owner",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Venue or court not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete court",
+      "description": "Delete a court from a venue owned by the current user",
+      "tags": [
+        "Owner"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "courtId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Court deleted successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "message": {
+                    "type": "string",
+                    "example": "Court deleted successfully"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Not the venue owner",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Venue or court not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/venues/{venueId}/reviews": {
+    "get": {
+      "summary": "Get venue reviews",
+      "description": "Retrieve all reviews for a specific venue",
+      "tags": [
+        "Reviews"
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "description": "Page number",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "Items per page",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Reviews retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "reviews": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Review"
+                        }
+                      },
+                      "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Venue not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    },
+    "post": {
+      "summary": "Add review for venue",
+      "description": "Add a review and rating for a venue",
+      "tags": [
+        "Reviews"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "venueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "rating": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5,
+                  "example": 4
+                },
+                "comment": {
+                  "type": "string",
+                  "maxLength": 500,
+                  "example": "Great venue with excellent facilities!"
+                }
+              },
+              "required": [
+                "rating"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Review added successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "review": {
+                        "type": "object",
+                        "properties": {
+                          "_id": {
+                            "type": "string",
+                            "example": "64a7b8c9d1e2f3a4b5c6d7e0"
+                          },
+                          "user": {
+                            "type": "string",
+                            "example": "64a7b8c9d1e2f3a4b5c6d7e8"
+                          },
+                          "venue": {
+                            "type": "string",
+                            "example": "64a7b8c9d1e2f3a4b5c6d7e9"
+                          },
+                          "rating": {
+                            "type": "integer",
+                            "example": 4
+                          },
+                          "comment": {
+                            "type": "string",
+                            "example": "Great venue with excellent facilities!"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
                           }
-                        },
-                        "pagination": {
-                          "$ref": "#/components/schemas/Pagination"
                         }
                       }
                     }
@@ -915,1265 +2409,148 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Admin access required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
               }
             }
           }
-        }
-      }
-    },
-    "/admin/venues/{venueId}": {
-      "delete": {
-        "summary": "Delete venue (Admin)",
-        "description": "Delete any venue (Admin only)",
-        "tags": ["Admin"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
             }
           }
-        ],
-        "responses": {
-          "200": {
-            "description": "Venue deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Venue deleted successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Admin access required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+        },
+        "404": {
+          "description": "Venue not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
               }
             }
           }
         }
       }
-    },
-    "/admin/venues/{venueId}/reject": {
-      "patch": {
-        "summary": "Reject venue (Admin)",
-        "description": "Reject a pending venue (Admin only)",
-        "tags": ["Admin"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
+    }
+  },
+  "/bookings/{bookingId}/payment": {
+    "post": {
+      "summary": "Process booking payment",
+      "description": "Process payment for a booking",
+      "tags": [
+        "Payments"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "bookingId",
+          "in": "path",
           "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "paymentMethod": {
+                  "type": "string",
+                  "enum": [
+                    "credit_card",
+                    "debit_card",
+                    "upi",
+                    "net_banking"
+                  ],
+                  "example": "credit_card"
+                },
+                "cardNumber": {
+                  "type": "string",
+                  "example": "4111111111111111"
+                },
+                "expiryDate": {
+                  "type": "string",
+                  "example": "12/25"
+                },
+                "cvv": {
+                  "type": "string",
+                  "example": "123"
+                }
+              },
+              "required": [
+                "paymentMethod"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Payment processed successfully",
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "reason": {
-                    "type": "string",
-                    "example": "Insufficient documentation provided"
-                  }
-                },
-                "required": ["reason"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Venue rejected successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VenueResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Admin access required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/users": {
-      "get": {
-        "summary": "Get all users (Admin)",
-        "description": "Retrieve all users with optional filters (Admin only)",
-        "tags": ["Admin Users"],
-        "security": [{"bearerAuth": []}],
-        "parameters": [
-          {
-            "name": "role",
-            "in": "query",
-            "description": "Filter by user role",
-            "schema": {
-              "type": "string",
-              "enum": ["user", "owner", "admin"]
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "description": "Filter by user status",
-            "schema": {
-              "type": "string",
-              "enum": ["active", "inactive", "banned"]
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Page number",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Items per page",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 10
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of users retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/User"
-                      }
-                    },
-                    "pagination": {
-                      "$ref": "#/components/schemas/Pagination"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          }
-        }
-      }
-    },
-    "/admin/users/{userId}": {
-      "get": {
-        "summary": "Get user details (Admin)",
-        "description": "Retrieve detailed information about a specific user (Admin only)",
-        "tags": ["Admin"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Admin access required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "summary": "Update user (Admin)",
-        "description": "Update any user's information (Admin only)",
-        "tags": ["Admin"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProfileUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "User updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Admin access required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete user (Admin)",
-        "description": "Delete any user account (Admin only)",
-        "tags": ["Admin"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "User deleted successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Admin access required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/owner/venues": {
-      "get": {
-        "summary": "Get owner's venues",
-        "description": "Retrieve all venues owned by the current user",
-        "tags": ["Owner"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Venues retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VenuesResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Create venue",
-        "description": "Create a new venue (Owner only)",
-        "tags": ["Owner"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VenueCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Venue created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VenueResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/owner/venues/{venueId}": {
-      "get": {
-        "summary": "Get specific venue",
-        "description": "Retrieve detailed information about a specific venue owned by the current user",
-        "tags": ["Owner"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Venue retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VenueResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Not the venue owner",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "summary": "Update venue",
-        "description": "Update a venue owned by the current user",
-        "tags": ["Owner"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VenueCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Venue updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VenueResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Not the venue owner",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete venue",
-        "description": "Delete a venue owned by the current user",
-        "tags": ["Owner"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Venue deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Venue deleted successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Not the venue owner",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/owner/venues/{venueId}/bookings": {
-      "get": {
-        "summary": "Get venue bookings",
-        "description": "Retrieve all bookings for a specific venue owned by the current user",
-        "tags": ["Owner"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "description": "Filter by booking status",
-            "schema": {
-              "type": "string",
-              "enum": ["pending", "confirmed", "cancelled", "completed"]
-            }
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "description": "Filter by specific date",
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "example": "2024-12-25"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Page number",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Items per page",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 10
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Bookings retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BookingsResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Not the venue owner",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/owner/venues/{venueId}/courts": {
-      "post": {
-        "summary": "Add court to venue",
-        "description": "Add a new court to a venue (Owner only)",
-        "tags": ["Owner"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "example": "Court 1"
+                  "success": {
+                    "type": "boolean",
+                    "example": true
                   },
-                  "sport": {
-                    "type": "string",
-                    "example": "Badminton"
-                  },
-                  "pricePerHour": {
-                    "type": "number",
-                    "example": 150
-                  },
-                  "description": {
-                    "type": "string",
-                    "example": "Premium court with synthetic surface"
-                  }
-                },
-                "required": ["name", "sport", "pricePerHour"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Court added successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VenueResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Owner access required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/venues/{venueId}": {
-      "get": {
-        "summary": "Get venue details",
-        "description": "Retrieve detailed information about a specific venue",
-        "tags": ["Venues"],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Venue retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VenueResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/owner/venues/{venueId}/courts/{courtId}": {
-      "put": {
-        "summary": "Update court",
-        "description": "Update a court in a venue owned by the current user",
-        "tags": ["Owner"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "courtId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CourtCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Court updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VenueResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Not the venue owner",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue or court not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete court",
-        "description": "Delete a court from a venue owned by the current user",
-        "tags": ["Owner"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "courtId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Court deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Court deleted successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Not the venue owner",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue or court not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/venues/{venueId}/reviews": {
-      "get": {
-        "summary": "Get venue reviews",
-        "description": "Retrieve all reviews for a specific venue",
-        "tags": ["Reviews"],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Page number",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Items per page",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 10
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Reviews retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "reviews": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/Review"
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "payment": {
+                        "type": "object",
+                        "properties": {
+                          "_id": {
+                            "type": "string",
+                            "example": "64a7b8c9d1e2f3a4b5c6d7f0"
+                          },
+                          "booking": {
+                            "type": "string",
+                            "example": "64a7b8c9d1e2f3a4b5c6d7e1"
+                          },
+                          "amount": {
+                            "type": "number",
+                            "example": 600
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "completed",
+                              "failed",
+                              "refunded"
+                            ],
+                            "example": "completed"
+                          },
+                          "transactionId": {
+                            "type": "string",
+                            "example": "txn_1234567890"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
                           }
-                        },
-                        "pagination": {
-                          "$ref": "#/components/schemas/Pagination"
                         }
                       }
                     }
@@ -2181,234 +2558,469 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "Venue not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Booking not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/admin/analytics": {
+    "get": {
+      "summary": "Get platform analytics (Admin)",
+      "description": "Retrieve platform analytics data (Admin only)",
+      "tags": [
+        "Admin"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "startDate",
+          "in": "query",
+          "description": "Start date for analytics period",
+          "schema": {
+            "type": "string",
+            "format": "date",
+            "example": "2024-01-01"
+          }
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "description": "End date for analytics period",
+          "schema": {
+            "type": "string",
+            "format": "date",
+            "example": "2024-12-31"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Analytics retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "totalUsers": {
+                        "type": "integer",
+                        "example": 1250
+                      },
+                      "totalVenues": {
+                        "type": "integer",
+                        "example": 45
+                      },
+                      "totalBookings": {
+                        "type": "integer",
+                        "example": 3200
+                      },
+                      "totalRevenue": {
+                        "type": "number",
+                        "example": 125000
+                      },
+                      "popularSports": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "sport": {
+                              "type": "string",
+                              "example": "Badminton"
+                            },
+                            "bookings": {
+                              "type": "integer",
+                              "example": 1200
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden - Admin access required",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/admin/facilities/pending": {
+    "get": {
+      "summary": "Get pending facilities (Admin)",
+      "description": "Retrieve a list of facilities pending approval (Admin only)",
+      "tags": [
+        "Admin Facilities"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "description": "Page number",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "Items per page",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "List of pending facilities",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean"
+                  },
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Venue"
+                    }
+                  },
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "currentPage": {
+                        "type": "integer"
+                      },
+                      "totalPages": {
+                        "type": "integer"
+                      },
+                      "totalItems": {
+                        "type": "integer"
+                      },
+                      "itemsPerPage": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "$ref": "#/components/responses/UnauthorizedError"
+        },
+        "403": {
+          "$ref": "#/components/responses/ForbiddenError"
+        }
+      }
+    }
+  },
+  "/admin/facilities/{id}": {
+    "get": {
+      "summary": "Get facility details (Admin)",
+      "description": "Retrieve detailed information about a facility (Admin only)",
+      "tags": [
+        "Admin Facilities"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Facility details retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Venue"
+              }
+            }
+          }
+        },
+        "401": {
+          "$ref": "#/components/responses/UnauthorizedError"
+        },
+        "403": {
+          "$ref": "#/components/responses/ForbiddenError"
+        },
+        "404": {
+          "$ref": "#/components/responses/NotFoundError"
+        }
+      }
+    }
+  },
+  "/admin/facilities/{id}/approve": {
+    "patch": {
+      "summary": "Approve facility (Admin)",
+      "description": "Approve a pending facility (Admin only)",
+      "tags": [
+        "Admin Facilities"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Facility approved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Venue"
+              }
+            }
+          }
+        },
+        "400": {
+          "$ref": "#/components/responses/BadRequestError"
+        },
+        "401": {
+          "$ref": "#/components/responses/UnauthorizedError"
+        },
+        "403": {
+          "$ref": "#/components/responses/ForbiddenError"
+        },
+        "404": {
+          "$ref": "#/components/responses/NotFoundError"
+        }
+      }
+    }
+  },
+  "/admin/facilities/{id}/reject": {
+    "patch": {
+      "summary": "Reject facility (Admin)",
+      "description": "Reject a pending facility (Admin only)",
+      "tags": [
+        "Admin Facilities"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "reason"
+              ],
+              "properties": {
+                "reason": {
+                  "type": "string",
+                  "description": "Reason for rejection"
                 }
               }
             }
           }
         }
       },
-      "post": {
-        "summary": "Add review for venue",
-        "description": "Add a review and rating for a venue",
-        "tags": ["Reviews"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "venueId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
+      "responses": {
+        "200": {
+          "description": "Facility rejected successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Venue"
+              }
             }
           }
-        ],
-        "requestBody": {
-          "required": true,
+        },
+        "400": {
+          "$ref": "#/components/responses/BadRequestError"
+        },
+        "401": {
+          "$ref": "#/components/responses/UnauthorizedError"
+        },
+        "403": {
+          "$ref": "#/components/responses/ForbiddenError"
+        },
+        "404": {
+          "$ref": "#/components/responses/NotFoundError"
+        }
+      }
+    }
+  },
+  "/notifications": {
+    "get": {
+      "summary": "Get user notifications",
+      "description": "Retrieve notifications for the current user",
+      "tags": [
+        "Notifications"
+      ],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "description": "Page number",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "Items per page",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Notifications retrieved successfully",
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "rating": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 5,
-                    "example": 4
+                  "success": {
+                    "type": "boolean",
+                    "example": true
                   },
-                  "comment": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "example": "Great venue with excellent facilities!"
-                  }
-                },
-                "required": ["rating"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Review added successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "review": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "notifications": {
+                        "type": "array",
+                        "items": {
                           "type": "object",
                           "properties": {
                             "_id": {
                               "type": "string",
-                              "example": "64a7b8c9d1e2f3a4b5c6d7e0"
+                              "example": "64a7b8c9d1e2f3a4b5c6d7f1"
                             },
                             "user": {
                               "type": "string",
                               "example": "64a7b8c9d1e2f3a4b5c6d7e8"
                             },
-                            "venue": {
+                            "title": {
                               "type": "string",
-                              "example": "64a7b8c9d1e2f3a4b5c6d7e9"
+                              "example": "Booking Confirmation"
                             },
-                            "rating": {
-                              "type": "integer",
-                              "example": 4
-                            },
-                            "comment": {
+                            "message": {
                               "type": "string",
-                              "example": "Great venue with excellent facilities!"
+                              "example": "Your booking for Court 1 on 2024-12-25 at 10:00 AM has been confirmed."
                             },
-                            "createdAt": {
-                              "type": "string",
-                              "format": "date-time"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Venue not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/bookings/{bookingId}/payment": {
-      "post": {
-        "summary": "Process booking payment",
-        "description": "Process payment for a booking",
-        "tags": ["Payments"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "bookingId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "paymentMethod": {
-                    "type": "string",
-                    "enum": ["credit_card", "debit_card", "upi", "net_banking"],
-                    "example": "credit_card"
-                  },
-                  "cardNumber": {
-                    "type": "string",
-                    "example": "4111111111111111"
-                  },
-                  "expiryDate": {
-                    "type": "string",
-                    "example": "12/25"
-                  },
-                  "cvv": {
-                    "type": "string",
-                    "example": "123"
-                  }
-                },
-                "required": ["paymentMethod"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Payment processed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "payment": {
-                          "type": "object",
-                          "properties": {
-                            "_id": {
-                              "type": "string",
-                              "example": "64a7b8c9d1e2f3a4b5c6d7f0"
-                            },
-                            "booking": {
-                              "type": "string",
-                              "example": "64a7b8c9d1e2f3a4b5c6d7e1"
-                            },
-                            "amount": {
-                              "type": "number",
-                              "example": 600
-                            },
-                            "status": {
-                              "type": "string",
-                              "enum": ["pending", "completed", "failed", "refunded"],
-                              "example": "completed"
-                            },
-                            "transactionId": {
-                              "type": "string",
-                              "example": "txn_1234567890"
+                            "read": {
+                              "type": "boolean",
+                              "example": false
                             },
                             "createdAt": {
                               "type": "string",
@@ -2416,475 +3028,30 @@
                             }
                           }
                         }
+                      },
+                      "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
                       }
                     }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Booking not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/analytics": {
-      "get": {
-        "summary": "Get platform analytics (Admin)",
-        "description": "Retrieve platform analytics data (Admin only)",
-        "tags": ["Admin"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "startDate",
-            "in": "query",
-            "description": "Start date for analytics period",
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "example": "2024-01-01"
-            }
-          },
-          {
-            "name": "endDate",
-            "in": "query",
-            "description": "End date for analytics period",
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "example": "2024-12-31"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Analytics retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "totalUsers": {
-                          "type": "integer",
-                          "example": 1250
-                        },
-                        "totalVenues": {
-                          "type": "integer",
-                          "example": 45
-                        },
-                        "totalBookings": {
-                          "type": "integer",
-                          "example": 3200
-                        },
-                        "totalRevenue": {
-                          "type": "number",
-                          "example": 125000
-                        },
-                        "popularSports": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "sport": {
-                                "type": "string",
-                                "example": "Badminton"
-                              },
-                              "bookings": {
-                                "type": "integer",
-                                "example": 1200
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Admin access required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/facilities/pending": {
-      "get": {
-        "summary": "Get pending facilities (Admin)",
-        "description": "Retrieve a list of facilities pending approval (Admin only)",
-        "tags": ["Admin Facilities"],
-        "security": [{"bearerAuth": []}],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Page number",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Items per page",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 10
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of pending facilities",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Venue"
-                      }
-                    },
-                    "pagination": {
-                      "type": "object",
-                      "properties": {
-                        "currentPage": {
-                          "type": "integer"
-                        },
-                        "totalPages": {
-                          "type": "integer"
-                        },
-                        "totalItems": {
-                          "type": "integer"
-                        },
-                        "itemsPerPage": {
-                          "type": "integer"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          }
-        }
-      }
-    },
-    "/admin/facilities/{id}": {
-      "get": {
-        "summary": "Get facility details (Admin)",
-        "description": "Retrieve detailed information about a facility (Admin only)",
-        "tags": ["Admin Facilities"],
-        "security": [{"bearerAuth": []}],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Facility details retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Venue"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      }
-    },
-    "/admin/facilities/{id}/approve": {
-      "patch": {
-        "summary": "Approve facility (Admin)",
-        "description": "Approve a pending facility (Admin only)",
-        "tags": ["Admin Facilities"],
-        "security": [{"bearerAuth": []}],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Facility approved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Venue"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      }
-    },
-    "/admin/facilities/{id}/reject": {
-      "patch": {
-        "summary": "Reject facility (Admin)",
-        "description": "Reject a pending facility (Admin only)",
-        "tags": ["Admin Facilities"],
-        "security": [{"bearerAuth": []}],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["reason"],
-                "properties": {
-                  "reason": {
-                    "type": "string",
-                    "description": "Reason for rejection"
                   }
                 }
               }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Facility rejected successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Venue"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      }
-    },
-    "/notifications": {
-      "get": {
-        "summary": "Get user notifications",
-        "description": "Retrieve notifications for the current user",
-        "tags": ["Notifications"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Page number",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Items per page",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 10
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notifications retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "notifications": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "_id": {
-                                "type": "string",
-                                "example": "64a7b8c9d1e2f3a4b5c6d7f1"
-                              },
-                              "user": {
-                                "type": "string",
-                                "example": "64a7b8c9d1e2f3a4b5c6d7e8"
-                              },
-                              "title": {
-                                "type": "string",
-                                "example": "Booking Confirmation"
-                              },
-                              "message": {
-                                "type": "string",
-                                "example": "Your booking for Court 1 on 2024-12-25 at 10:00 AM has been confirmed."
-                              },
-                              "read": {
-                                "type": "boolean",
-                                "example": false
-                              },
-                              "createdAt": {
-                                "type": "string",
-                                "format": "date-time"
-                              }
-                            }
-                          }
-                        },
-                        "pagination": {
-                          "$ref": "#/components/schemas/Pagination"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
               }
             }
           }
         }
       }
-    },
+    }
+  },
   "components": {
     "securitySchemes": {
       "bearerAuth": {
@@ -2936,7 +3103,12 @@
       },
       "UserRegister": {
         "type": "object",
-        "required": ["name", "email", "phone", "password"],
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "password"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -2961,14 +3133,20 @@
           },
           "role": {
             "type": "string",
-            "enum": ["user", "owner"],
+            "enum": [
+              "user",
+              "owner"
+            ],
             "default": "user"
           }
         }
       },
       "UserLogin": {
         "type": "object",
-        "required": ["email", "password"],
+        "required": [
+          "email",
+          "password"
+        ],
         "properties": {
           "email": {
             "type": "string",
@@ -3034,12 +3212,20 @@
           },
           "role": {
             "type": "string",
-            "enum": ["user", "owner", "admin"],
+            "enum": [
+              "user",
+              "owner",
+              "admin"
+            ],
             "example": "user"
           },
           "status": {
             "type": "string",
-            "enum": ["active", "inactive", "banned"],
+            "enum": [
+              "active",
+              "inactive",
+              "banned"
+            ],
             "example": "active"
           },
           "createdAt": {
@@ -3086,7 +3272,12 @@
         "properties": {
           "paymentMethod": {
             "type": "string",
-            "enum": ["credit_card", "debit_card", "upi", "net_banking"],
+            "enum": [
+              "credit_card",
+              "debit_card",
+              "upi",
+              "net_banking"
+            ],
             "example": "credit_card"
           },
           "cardNumber": {
@@ -3102,7 +3293,9 @@
             "example": "123"
           }
         },
-        "required": ["paymentMethod"]
+        "required": [
+          "paymentMethod"
+        ]
       },
       "ReviewCreate": {
         "type": "object",
@@ -3119,7 +3312,9 @@
             "example": "Great venue with excellent facilities!"
           }
         },
-        "required": ["rating"]
+        "required": [
+          "rating"
+        ]
       },
       "CourtCreate": {
         "type": "object",
@@ -3130,7 +3325,18 @@
           },
           "sport": {
             "type": "string",
-            "enum": ["badminton", "tennis", "cricket", "football", "basketball", "volleyball", "squash", "table-tennis", "swimming", "gym"],
+            "enum": [
+              "badminton",
+              "tennis",
+              "cricket",
+              "football",
+              "basketball",
+              "volleyball",
+              "squash",
+              "table-tennis",
+              "swimming",
+              "gym"
+            ],
             "example": "badminton"
           },
           "pricePerHour": {
@@ -3142,7 +3348,11 @@
             "example": "Premium court with synthetic surface"
           }
         },
-        "required": ["name", "sport", "pricePerHour"]
+        "required": [
+          "name",
+          "sport",
+          "pricePerHour"
+        ]
       },
       "Notification": {
         "type": "object",
@@ -3196,7 +3406,12 @@
             "example": "11:00"
           }
         },
-        "required": ["court", "date", "startTime", "endTime"]
+        "required": [
+          "court",
+          "date",
+          "startTime",
+          "endTime"
+        ]
       },
       "CourtAvailability": {
         "type": "object",
@@ -3230,7 +3445,13 @@
       },
       "VenueCreate": {
         "type": "object",
-        "required": ["name", "address", "location", "sports", "contactInfo"],
+        "required": [
+          "name",
+          "address",
+          "location",
+          "sports",
+          "contactInfo"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -3245,7 +3466,12 @@
           },
           "address": {
             "type": "object",
-            "required": ["street", "city", "state", "zipCode"],
+            "required": [
+              "street",
+              "city",
+              "state",
+              "zipCode"
+            ],
             "properties": {
               "street": {
                 "type": "string",
@@ -3266,16 +3492,24 @@
               "country": {
                 "type": "string",
                 "default": "India"
+              },
+              "startingPrice": {
+                "type": "number",
+                "example": 100
               }
             }
           },
           "location": {
             "type": "object",
-            "required": ["coordinates"],
+            "required": [
+              "coordinates"
+            ],
             "properties": {
               "type": {
                 "type": "string",
-                "enum": ["Point"],
+                "enum": [
+                  "Point"
+                ],
                 "default": "Point"
               },
               "coordinates": {
@@ -3285,7 +3519,10 @@
                 },
                 "minItems": 2,
                 "maxItems": 2,
-                "example": [72.8777, 19.0760]
+                "example": [
+                  72.8777,
+                  19.0760
+                ]
               }
             }
           },
@@ -3293,14 +3530,30 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["badminton", "tennis", "cricket", "football", "basketball", "volleyball", "squash", "table-tennis", "swimming", "gym"]
+              "enum": [
+                "badminton",
+                "tennis",
+                "cricket",
+                "football",
+                "basketball",
+                "volleyball",
+                "squash",
+                "table-tennis",
+                "swimming",
+                "gym"
+              ]
             },
             "minItems": 1,
-            "example": ["badminton", "tennis"]
+            "example": [
+              "badminton",
+              "tennis"
+            ]
           },
           "contactInfo": {
             "type": "object",
-            "required": ["phone"],
+            "required": [
+              "phone"
+            ],
             "properties": {
               "phone": {
                 "type": "string",
@@ -3390,7 +3643,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "approved", "rejected"],
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
             "example": "approved"
           },
           "rating": {
@@ -3409,7 +3666,13 @@
       },
       "BookingCreate": {
         "type": "object",
-        "required": ["venue", "court", "date", "startTime", "endTime"],
+        "required": [
+          "venue",
+          "court",
+          "date",
+          "startTime",
+          "endTime"
+        ],
         "properties": {
           "venue": {
             "type": "string",
@@ -3441,7 +3704,12 @@
           },
           "paymentMethod": {
             "type": "string",
-            "enum": ["card", "upi", "wallet", "cash"],
+            "enum": [
+              "card",
+              "upi",
+              "wallet",
+              "cash"
+            ],
             "default": "card"
           }
         }
@@ -3496,7 +3764,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "confirmed", "cancelled", "completed"],
+            "enum": [
+              "pending",
+              "confirmed",
+              "cancelled",
+              "completed"
+            ],
             "example": "pending"
           },
           "totalAmount": {
@@ -3505,7 +3778,12 @@
           },
           "paymentStatus": {
             "type": "string",
-            "enum": ["pending", "paid", "failed", "refunded"],
+            "enum": [
+              "pending",
+              "paid",
+              "failed",
+              "refunded"
+            ],
             "example": "pending"
           },
           "createdAt": {

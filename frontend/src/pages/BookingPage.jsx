@@ -1,46 +1,120 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useQuery } from 'react-query'
-import { Calendar, Clock, MapPin, Users, DollarSign, ArrowLeft } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useQuery, useMutation } from 'react-query'
+import { 
+  Calendar, 
+  Clock, 
+  MapPin, 
+  Users, 
+  DollarSign, 
+  ArrowLeft, 
+  Loader2,
+  AlertCircle
+} from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import { useBooking } from '../context/BookingContext'
-import { venueApi } from '../api/venueApi'
-import toast from 'react-hot-toast'
+import { venueApi, bookingApi } from '../api'
+import { format } from 'date-fns'
 
 const BookingPage = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const { venueId, courtId } = useParams()
   const { selectedVenue, selectedCourt, setVenue, setCourt } = useBooking()
   
-  const [selectedVenueId, setSelectedVenueId] = useState(selectedVenue?._id || '')
-  const [selectedCourtId, setSelectedCourtId] = useState(selectedCourt?._id || '')
+  // Form state
+  const [selectedVenueId, setSelectedVenueId] = useState(selectedVenue?._id || venueId || '')
+  const [selectedCourtId, setSelectedCourtId] = useState(selectedCourt?._id || courtId || '')
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [duration, setDuration] = useState('1')
+  const [bookingNotes, setBookingNotes] = useState('')
+  
+  // Auto-select venue/court from URL params if available
+  useEffect(() => {
+    if (venueId && selectedVenue?._id !== venueId) {
+      setSelectedVenueId(venueId)
+    }
+    if (courtId && selectedCourt?._id !== courtId) {
+      setSelectedCourtId(courtId)
+    }
+  }, [venueId, courtId, selectedVenue, selectedCourt])
 
-  // Fetch venues
-  const { data: venues } = useQuery(
-    'venues-for-booking',
-    () => venueApi.getVenues({ limit: 100 }),
+  // Fetch venues with error handling
+  const { 
+    data: venues = [], 
+    isLoading: isLoadingVenues, 
+    error: venuesError 
+  } = useQuery(
+    ['venues', 'booking'],
+    async () => {
+      try {
+        const response = await venueApi.getVenues({ limit: 100 })
+        return response.data?.venues || []
+      } catch (error) {
+        console.error('Error fetching venues:', error)
+        toast.error('Failed to load venues. Please try again.')
+        throw error
+      }
+    },
     {
-      select: (response) => response.data.venues || [],
+      refetchOnWindowFocus: false,
+      onError: (error) => {
+        console.error('Venues query error:', error)
+      }
     }
   )
 
-  // Fetch courts for selected venue
-  const { data: courts } = useQuery(
+  // Fetch courts for selected venue with error handling
+  const { 
+    data: courts = [], 
+    isLoading: isLoadingCourts, 
+    error: courtsError 
+  } = useQuery(
     ['venue-courts', selectedVenueId],
-    () => venueApi.getVenueCourts(selectedVenueId),
+    async () => {
+      if (!selectedVenueId) return []
+      try {
+        const response = await venueApi.getVenueCourts(selectedVenueId)
+        return response.data?.courts || []
+      } catch (error) {
+        console.error('Error fetching courts:', error)
+        toast.error('Failed to load courts. Please try again.')
+        throw error
+      }
+    },
     {
-      select: (response) => response.data.courts || [],
       enabled: !!selectedVenueId,
+      refetchOnWindowFocus: false,
+      onError: (error) => {
+        console.error('Courts query error:', error)
+      }
     }
   )
 
-  // Get available time slots
-  const timeSlots = [
-    '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
-    '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-    '18:00', '19:00', '20:00', '21:00', '22:00'
-  ]
+  // Generate time slots from 6:00 AM to 10:00 PM
+  const generateTimeSlots = () => {
+    const slots = []
+    for (let hour = 6; hour <= 22; hour++) {
+      const time = `${hour.toString().padStart(2, '0')}:00`
+      slots.push(time)
+    }
+    return slots
+  }
+  
+  const timeSlots = generateTimeSlots()
+  
+  // Calculate end time based on selected time and duration
+  const calculateEndTime = (startTime, duration) => {
+    if (!startTime || !duration) return ''
+    
+    const [hours, minutes] = startTime.split(':').map(Number)
+    const startDate = new Date()
+    startDate.setHours(hours, minutes, 0, 0)
+    
+    const endDate = new Date(startDate.getTime() + (parseInt(duration) * 60 * 60 * 1000))
+    return format(endDate, 'HH:mm')
+  }
 
   const handleVenueChange = (venueId) => {
     setSelectedVenueId(venueId)
@@ -59,54 +133,86 @@ const BookingPage = () => {
     }
   }
 
-  const calculateEndTime = (startTime, duration) => {
-    const [hours, minutes] = startTime.split(':').map(Number)
-    const endHours = hours + parseInt(duration)
-    return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
-  }
-
   const calculateTotalAmount = () => {
     if (!selectedCourtId || !duration) return 0
     const court = courts?.find(c => c._id === selectedCourtId)
     return court ? court.pricePerHour * parseInt(duration) : 0
   }
 
-  const handleBooking = () => {
-    if (!selectedVenueId || !selectedCourtId || !selectedDate || !selectedTime) {
-      toast.error('Please fill in all booking details')
+  // Handle booking submission
+  const { mutate: createBooking, isLoading: isSubmitting } = useMutation(
+    async (bookingData) => {
+      try {
+        const response = await bookingApi.createBooking(bookingData)
+        return response.data
+      } catch (error) {
+        console.error('Booking failed:', error)
+        throw error
+      }
+    },
+    {
+      onSuccess: (data) => {
+        toast.success('Booking successful!')
+        // Redirect to booking confirmation or user's bookings page
+        navigate('/my-bookings')
+      },
+      onError: (error) => {
+        const errorMessage = error.response?.data?.message || 'Failed to create booking'
+        toast.error(errorMessage)
+      }
+    }
+  )
+
+  const handleBooking = async (e) => {
+    e?.preventDefault()
+    
+    // Form validation
+    if (!selectedVenueId || !selectedCourtId || !selectedDate || !selectedTime || !duration) {
+      toast.error('Please fill in all required fields')
       return
     }
-
-    // Prepare booking data for payment page
-    const venue = venues?.find(v => v._id === selectedVenueId)
-    const court = courts?.find(c => c._id === selectedCourtId)
-
+    
+    if (!user) {
+      toast.error('Please log in to make a booking')
+      navigate('/login', { state: { from: window.location.pathname } })
+      return
+    }
+    
+    const selectedCourt = courts.find(c => c._id === selectedCourtId)
+    if (!selectedCourt) {
+      toast.error('Selected court not found')
+      return
+    }
+    
+    const selectedVenue = venues?.find(v => v._id === selectedVenueId)
+    if (!selectedVenue) {
+      toast.error('Selected venue not found')
+      return
+    }
+    
+    const startTime = new Date(`${selectedDate}T${selectedTime}`)
+    const endTime = new Date(startTime.getTime() + (parseInt(duration) * 60 * 60 * 1000))
+    
+    // Prepare booking data according to the backend's BookingCreate schema
     const bookingData = {
-      venueId: selectedVenueId,
-      courtId: selectedCourtId,
+      venue: selectedVenueId,
+      court: selectedCourtId,
       date: selectedDate,
       startTime: selectedTime,
       endTime: calculateEndTime(selectedTime, duration),
-      duration: parseInt(duration),
-      totalAmount: calculateTotalAmount(),
-      venue: {
-        _id: venue?._id,
-        name: venue?.name,
-        location: venue?.shortLocation || venue?.address
-      },
-      court: {
-        _id: court?._id,
-        name: court?.name,
-        pricePerHour: court?.pricePerHour
-      },
-      timeSlot: {
-        startTime: selectedTime,
-        endTime: calculateEndTime(selectedTime, duration)
-      }
+      // Optional fields
+      notes: bookingNotes || undefined, // Only include if not empty
+      // The following fields will be set by the backend
+      // - status
+      // - paymentStatus
+      // - totalAmount
+      // - user (from auth token)
+      // - createdAt
+      // - updatedAt
     }
-
-    // Navigate to payment page with booking data
-    navigate('/payment', { state: { bookingData } })
+    
+    // Submit booking
+    createBooking(bookingData)
   }
 
   const today = new Date().toISOString().split('T')[0]

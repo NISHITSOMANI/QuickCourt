@@ -11,9 +11,9 @@ import {
   Coffee,
   Shield
 } from 'lucide-react'
-import { useBooking } from '../context/BookingContext'
-import { useAuth } from '../context/AuthContext'
-import PaymentMethodModal from './PaymentMethodModal'
+import { useBooking } from '../../context/BookingContext'
+import { useAuth } from '../../context/AuthContext'
+import PaymentMethodModal from '../ui/PaymentMethodModal'
 
 const VenueCard = ({ venue, className = '' }) => {
   const navigate = useNavigate()
