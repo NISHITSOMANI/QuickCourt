@@ -1,0 +1,802 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "QuickCourt API",
+    "description": "Sports venue booking platform API",
+    "version": "1.0.0",
+    "contact": {
+      "name": "QuickCourt Support",
+      "email": "support@quickcourt.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api/v1",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.quickcourt.com/api/v1",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Check if the API is running",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "description": "Create a new user account",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegister"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login user",
+        "description": "Authenticate user and return tokens",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/venues": {
+      "get": {
+        "summary": "Get venues",
+        "description": "Retrieve a list of venues with optional filters",
+        "tags": ["Venues"],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Search query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "description": "Filter by sport",
+            "schema": {
+              "type": "string",
+              "enum": ["badminton", "tennis", "cricket", "football", "basketball", "volleyball", "squash", "table-tennis", "swimming", "gym"]
+            }
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "description": "Filter by city",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Venues retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VenuesResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create venue",
+        "description": "Create a new venue (owner/admin only)",
+        "tags": ["Venues"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VenueCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Venue created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VenueResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings": {
+      "post": {
+        "summary": "Create booking",
+        "description": "Create a new booking",
+        "tags": ["Bookings"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booking created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or booking conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "QuickCourt API is running"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Error description"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "UserRegister": {
+        "type": "object",
+        "required": ["name", "email", "phone", "password"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100,
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "pattern": "^[6-9]\\d{9}$",
+            "example": "9876543210"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "example": "Password123!"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["user", "owner"],
+            "default": "user"
+          }
+        }
+      },
+      "UserLogin": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "Password123!"
+          }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Login successful"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "$ref": "#/components/schemas/User"
+              },
+              "tokens": {
+                "type": "object",
+                "properties": {
+                  "accessToken": {
+                    "type": "string"
+                  },
+                  "refreshToken": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "64a7b8c9d1e2f3a4b5c6d7e8"
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "example": "john@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["user", "owner", "admin"],
+            "example": "user"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "inactive", "banned"],
+            "example": "active"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "VenueCreate": {
+        "type": "object",
+        "required": ["name", "address", "location", "sports", "contactInfo"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 200,
+            "example": "Sports Complex Arena"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "example": "Premium sports facility with modern amenities"
+          },
+          "address": {
+            "type": "object",
+            "required": ["street", "city", "state", "zipCode"],
+            "properties": {
+              "street": {
+                "type": "string",
+                "example": "123 Sports Street"
+              },
+              "city": {
+                "type": "string",
+                "example": "Mumbai"
+              },
+              "state": {
+                "type": "string",
+                "example": "Maharashtra"
+              },
+              "zipCode": {
+                "type": "string",
+                "example": "400001"
+              },
+              "country": {
+                "type": "string",
+                "default": "India"
+              }
+            }
+          },
+          "location": {
+            "type": "object",
+            "required": ["coordinates"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["Point"],
+                "default": "Point"
+              },
+              "coordinates": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 2,
+                "maxItems": 2,
+                "example": [72.8777, 19.0760]
+              }
+            }
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["badminton", "tennis", "cricket", "football", "basketball", "volleyball", "squash", "table-tennis", "swimming", "gym"]
+            },
+            "minItems": 1,
+            "example": ["badminton", "tennis"]
+          },
+          "contactInfo": {
+            "type": "object",
+            "required": ["phone"],
+            "properties": {
+              "phone": {
+                "type": "string",
+                "pattern": "^[6-9]\\d{9}$",
+                "example": "9876543210"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "info@sportscomplex.com"
+              },
+              "website": {
+                "type": "string",
+                "format": "uri",
+                "example": "https://sportscomplex.com"
+              }
+            }
+          }
+        }
+      },
+      "VenueResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "venue": {
+                "$ref": "#/components/schemas/Venue"
+              }
+            }
+          }
+        }
+      },
+      "VenuesResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "venues": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Venue"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/Pagination"
+              }
+            }
+          }
+        }
+      },
+      "Venue": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "64a7b8c9d1e2f3a4b5c6d7e8"
+          },
+          "name": {
+            "type": "string",
+            "example": "Sports Complex Arena"
+          },
+          "description": {
+            "type": "string",
+            "example": "Premium sports facility"
+          },
+          "address": {
+            "type": "object"
+          },
+          "location": {
+            "type": "object"
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "rejected"],
+            "example": "approved"
+          },
+          "rating": {
+            "type": "number",
+            "example": 4.5
+          },
+          "reviewCount": {
+            "type": "integer",
+            "example": 25
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookingCreate": {
+        "type": "object",
+        "required": ["venue", "court", "date", "startTime", "endTime"],
+        "properties": {
+          "venue": {
+            "type": "string",
+            "example": "64a7b8c9d1e2f3a4b5c6d7e8"
+          },
+          "court": {
+            "type": "string",
+            "example": "64a7b8c9d1e2f3a4b5c6d7e9"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2024-12-25"
+          },
+          "startTime": {
+            "type": "string",
+            "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$",
+            "example": "10:00"
+          },
+          "endTime": {
+            "type": "string",
+            "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$",
+            "example": "11:00"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500,
+            "example": "Birthday party booking"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": ["card", "upi", "wallet", "cash"],
+            "default": "card"
+          }
+        }
+      },
+      "BookingResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "booking": {
+                "$ref": "#/components/schemas/Booking"
+              }
+            }
+          }
+        }
+      },
+      "Booking": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "64a7b8c9d1e2f3a4b5c6d7e8"
+          },
+          "user": {
+            "type": "string",
+            "example": "64a7b8c9d1e2f3a4b5c6d7e7"
+          },
+          "venue": {
+            "type": "string",
+            "example": "64a7b8c9d1e2f3a4b5c6d7e8"
+          },
+          "court": {
+            "type": "string",
+            "example": "64a7b8c9d1e2f3a4b5c6d7e9"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "10:00"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "11:00"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "confirmed", "cancelled", "completed"],
+            "example": "pending"
+          },
+          "totalAmount": {
+            "type": "number",
+            "example": 500
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": ["pending", "paid", "failed", "refunded"],
+            "example": "pending"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "example": 1
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 5
+          },
+          "totalItems": {
+            "type": "integer",
+            "example": 50
+          },
+          "itemsPerPage": {
+            "type": "integer",
+            "example": 10
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health check endpoints"
+    },
+    {
+      "name": "Authentication",
+      "description": "User authentication and authorization"
+    },
+    {
+      "name": "Venues",
+      "description": "Venue management"
+    },
+    {
+      "name": "Bookings",
+      "description": "Booking management"
+    },
+    {
+      "name": "Admin",
+      "description": "Admin operations"
+    }
+  ]
+}

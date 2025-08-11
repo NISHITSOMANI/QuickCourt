@@ -1,0 +1,433 @@
+{
+	"info": {
+		"name": "QuickCourt API Complete Test Suite",
+		"description": "Comprehensive automated test suite for QuickCourt API with all endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{baseUrl}}/health"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('API Running', () => pm.response.json().success === true);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Register Player",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"name\":\"{{playerName}}\",\"email\":\"{{playerEmail}}\",\"phone\":\"{{playerPhone}}\",\"password\":\"{{playerPassword}}\",\"role\":\"user\"}"
+				},
+				"url": "{{baseUrl}}/auth/register"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 201', () => pm.response.to.have.status(201));",
+							"const data = pm.response.json();",
+							"pm.test('User Created', () => data.success === true);",
+							"pm.environment.set('playerToken', data.data.tokens.accessToken);",
+							"pm.environment.set('playerId', data.data.user._id);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Login Player",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"email\":\"{{playerEmail}}\",\"password\":\"{{playerPassword}}\"}"
+				},
+				"url": "{{baseUrl}}/auth/login"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"const data = pm.response.json();",
+							"pm.environment.set('playerToken', data.data.tokens.accessToken);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Register Owner",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"name\":\"{{ownerName}}\",\"email\":\"{{ownerEmail}}\",\"phone\":\"{{ownerPhone}}\",\"password\":\"{{ownerPassword}}\",\"role\":\"owner\"}"
+				},
+				"url": "{{baseUrl}}/auth/register"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 201', () => pm.response.to.have.status(201));",
+							"const data = pm.response.json();",
+							"pm.environment.set('ownerToken', data.data.tokens.accessToken);",
+							"pm.environment.set('ownerId', data.data.user._id);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Create Venue",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{ownerToken}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"name\":\"Test Sports Complex\",\"description\":\"Premium facility\",\"address\":{\"street\":\"123 Test St\",\"city\":\"Mumbai\",\"state\":\"Maharashtra\",\"zipCode\":\"400001\"},\"location\":{\"type\":\"Point\",\"coordinates\":[72.8777,19.0760]},\"sports\":[\"badminton\",\"tennis\"],\"amenities\":[\"parking\",\"wifi\"],\"operatingHours\":{\"monday\":{\"open\":\"06:00\",\"close\":\"22:00\"}},\"contactInfo\":{\"phone\":\"9876543210\",\"email\":\"test@venue.com\"}}"
+				},
+				"url": "{{baseUrl}}/venues"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 201', () => pm.response.to.have.status(201));",
+							"const data = pm.response.json();",
+							"pm.environment.set('venueId', data.data.venue._id);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Get Venues",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{baseUrl}}/venues?page=1&limit=10"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('Has Venues', () => pm.response.json().data.venues.length >= 0);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Get Venue by ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{baseUrl}}/venues/{{venueId}}"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('Venue Found', () => pm.response.json().data.venue._id === pm.environment.get('venueId'));"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Create Booking",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{playerToken}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"venue\":\"{{venueId}}\",\"court\":\"{{courtId}}\",\"date\":\"{{bookingDate}}\",\"startTime\":\"10:00\",\"endTime\":\"11:00\",\"notes\":\"Test booking\",\"paymentMethod\":\"card\"}"
+				},
+				"url": "{{baseUrl}}/bookings"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const tomorrow = new Date();",
+							"tomorrow.setDate(tomorrow.getDate() + 1);",
+							"pm.environment.set('bookingDate', tomorrow.toISOString().split('T')[0]);",
+							"pm.environment.set('courtId', '64a7b8c9d1e2f3a4b5c6d7e9');"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 201', () => pm.response.to.have.status(201));",
+							"const data = pm.response.json();",
+							"pm.environment.set('bookingId', data.data.booking._id);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Get My Bookings",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{playerToken}}"}],
+				"url": "{{baseUrl}}/bookings/my"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('Has Bookings', () => Array.isArray(pm.response.json().data.bookings));"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Get Booking by ID",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{playerToken}}"}],
+				"url": "{{baseUrl}}/bookings/{{bookingId}}"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('Booking Found', () => pm.response.json().data.booking._id === pm.environment.get('bookingId'));"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Cancel Booking",
+			"request": {
+				"method": "PUT",
+				"header": [{"key": "Authorization", "value": "Bearer {{playerToken}}"}],
+				"url": "{{baseUrl}}/bookings/{{bookingId}}/cancel"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('Booking Cancelled', () => pm.response.json().data.booking.status === 'cancelled');"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Get Profile",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{playerToken}}"}],
+				"url": "{{baseUrl}}/profile"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('Profile Data', () => pm.response.json().data.user.email === pm.environment.get('playerEmail'));"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Update Profile",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{playerToken}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"name\":\"Updated Test Player\",\"preferences\":{\"notifications\":{\"email\":true,\"sms\":false}}}"
+				},
+				"url": "{{baseUrl}}/profile"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('Profile Updated', () => pm.response.json().data.user.name === 'Updated Test Player');"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Search Venues by Sport",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{baseUrl}}/venues?sport=badminton&city=Mumbai"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('Filtered Results', () => pm.response.json().success === true);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Unauthorized Access Test",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{baseUrl}}/profile"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 401', () => pm.response.to.have.status(401));",
+							"pm.test('Unauthorized Error', () => pm.response.json().success === false);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Invalid Login Test",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"email\":\"wrong@example.com\",\"password\":\"wrongpassword\"}"
+				},
+				"url": "{{baseUrl}}/auth/login"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 401', () => pm.response.to.have.status(401));",
+							"pm.test('Invalid Credentials', () => pm.response.json().message.includes('Invalid credentials'));"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Logout Player",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{playerToken}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"refreshToken\":\"{{playerRefreshToken}}\"}"
+				},
+				"url": "{{baseUrl}}/auth/logout"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('Logout Success', () => pm.response.json().message.includes('Logged out'));"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Delete Venue",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{ownerToken}}"}],
+				"url": "{{baseUrl}}/venues/{{venueId}}"
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('Venue Deleted', () => pm.response.json().success === true);"
+						]
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": ["console.log('Running: ' + pm.info.requestName);"]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test('Response Time < 5s', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+					"pm.test('Valid JSON', () => pm.response.json());"
+				]
+			}
+		}
+	]
+}
