@@ -21,15 +21,6 @@ export const authApi = {
       throw new Error('Name, email, and password are required');
     }
 
-    if (shouldUseMockApi()) {
-      const mockData = await mockAuthApi.register(userData);
-      toast.success('Registration successful! (demo)');
-      return {
-        user: transformUser(mockData.user),
-        token: mockData.token
-      };
-    }
-
     try {
       const response = await api.post('/auth/register', userData, {
         headers: {
@@ -133,11 +124,6 @@ export const authApi = {
   getMe: async (forceRefresh = false) => {
     const cacheKey = 'current-user';
     
-    if (shouldUseMockApi()) {
-      const mockData = await mockAuthApi.getMe();
-      return transformUser(mockData);
-    }
-
     try {
       const response = await api.get('/auth/me', {
         cacheKey: !forceRefresh ? cacheKey : undefined,
@@ -178,12 +164,8 @@ export const authApi = {
       // Clear token from localStorage
       localStorage.removeItem('token');
       
-      // Call the backend logout endpoint if not using mock
-      if (!shouldUseMockApi()) {
-        await api.post('/auth/logout')
-      } else {
-        await mockAuthApi.logout()
-      }
+      // Call the backend logout endpoint
+      await api.post('/auth/logout');
       
       toast.success('You have been logged out')
       return { success: true }
@@ -203,12 +185,6 @@ export const authApi = {
   forgotPassword: async (email) => {
     if (!email) {
       throw new Error('Email is required');
-    }
-
-    if (shouldUseMockApi()) {
-      await mockAuthApi.forgotPassword(email);
-      toast.success('Password reset link sent to your email (demo)');
-      return { message: 'Password reset email sent' };
     }
 
     try {
@@ -250,12 +226,6 @@ export const authApi = {
   resetPassword: async (token, newPassword) => {
     if (!token || !newPassword) {
       throw new Error('Token and new password are required');
-    }
-
-    if (shouldUseMockApi()) {
-      const mockData = await mockAuthApi.resetPassword(token, newPassword);
-      toast.success('Password reset successful. You can now log in with your new password. (demo)');
-      return mockData;
     }
 
     try {
@@ -303,12 +273,6 @@ export const authApi = {
   updateProfile: async (userData) => {
     if (!userData) {
       throw new Error('User data is required');
-    }
-
-    if (shouldUseMockApi()) {
-      const mockData = await mockAuthApi.updateProfile(userData);
-      toast.success('Profile updated successfully (demo)');
-      return transformUser(mockData);
     }
 
     try {
@@ -361,12 +325,6 @@ export const authApi = {
       throw new Error('Current and new password are required');
     }
 
-    if (shouldUseMockApi()) {
-      const mockData = await mockAuthApi.changePassword(currentPassword, newPassword);
-      toast.success('Password changed successfully (demo)');
-      return mockData;
-    }
-
     try {
       const response = await api.post(
         '/auth/change-password', 
@@ -411,12 +369,6 @@ export const authApi = {
   verifyEmail: async (token) => {
     if (!token) {
       throw new Error('Verification token is required');
-    }
-
-    if (shouldUseMockApi()) {
-      const mockData = await mockAuthApi.verifyEmail(token);
-      toast.success('Email verified successfully (demo)');
-      return mockData;
     }
 
     try {
@@ -464,12 +416,6 @@ export const authApi = {
   resendVerificationEmail: async (email) => {
     if (!email) {
       throw new Error('Email is required');
-    }
-
-    if (shouldUseMockApi()) {
-      await mockAuthApi.resendVerificationEmail(email);
-      toast.success('Verification email sent. Please check your inbox. (demo)');
-      return { message: 'Verification email sent' };
     }
 
     try {

@@ -60,11 +60,6 @@ const reviewApi = {
 
     const cacheKey = `venue-${venueId}-reviews-${JSON.stringify(defaultParams)}`;
 
-    if (shouldUseMockApi()) {
-      const mockData = await mockReviewApi.getVenueReviews(venueId, defaultParams);
-      return transformReviewList(mockData);
-    }
-
     try {
       const response = await api.get(`/venues/${venueId}/reviews`, {
         params: defaultParams,
@@ -75,7 +70,7 @@ const reviewApi = {
         }
       });
 
-      return transformReviewList(response.data);
+      return transformReviews(response.data);
     } catch (error) {
       console.error(`Error fetching reviews for venue ${venueId}:`, error);
 
@@ -83,7 +78,7 @@ const reviewApi = {
       const cachedResponse = api.getCachedResponse(cacheKey);
       if (cachedResponse) {
         toast('Using cached review data', { icon: '⚠️' });
-        return transformReviewList(cachedResponse.data);
+        return transformReviews(cachedResponse.data);
       }
 
       if (error.response) {
@@ -121,11 +116,6 @@ const reviewApi = {
     }
 
     const cacheKey = `review-${reviewId}`;
-
-    if (shouldUseMockApi()) {
-      const mockData = await mockReviewApi.getReview(reviewId);
-      return transformReview(mockData);
-    }
 
     try {
       const response = await api.get(`/reviews/${reviewId}`, {
@@ -170,11 +160,6 @@ const reviewApi = {
    * @returns {Promise<Object>} - Created review
    */
   async createReview(venueId, reviewData) {
-    if (shouldUseMockApi()) {
-      const mockData = await mockReviewApi.createReview(venueId, reviewData);
-      return transformReview(mockData);
-    }
-
     const formData = new FormData();
     formData.append('comment', reviewData.comment);
     formData.append('rating', reviewData.rating);
@@ -211,11 +196,6 @@ const reviewApi = {
    * @returns {Promise<Object>} - Updated review data
    */
   async updateReview(reviewId, updates) {
-    if (shouldUseMockApi()) {
-      const mockData = await mockReviewApi.updateReview(reviewId, updates);
-      return transformReview(mockData);
-    }
-
     const formData = new FormData();
     if (updates.comment) formData.append('comment', updates.comment);
     if (updates.rating) formData.append('rating', updates.rating);
@@ -259,11 +239,7 @@ const reviewApi = {
    * @returns {Promise<Object>} - Deletion confirmation with deleted review data
    */
   async deleteReview(reviewId) {
-    if (shouldUseMockApi()) {
-      return await mockReviewApi.deleteReview(reviewId);
-    }
-
-    const toastId = toast.loading('Deleting review...');
+const toastId = toast.loading('Deleting review...');
 
     try {
       const response = await api.delete(`/reviews/${reviewId}`);
@@ -293,11 +269,7 @@ const reviewApi = {
    * @returns {Promise<{liked: boolean, likeCount: number}>} - Updated like status and count
    */
   async toggleLike(reviewId) {
-    if (shouldUseMockApi()) {
-      return await mockReviewApi.toggleLike(reviewId);
-    }
-
-    try {
+try {
       const response = await api.post(`/reviews/${reviewId}/like`);
 
       // Invalidate relevant caches after successful like toggle
@@ -335,12 +307,7 @@ const reviewApi = {
 
     const cacheKey = `user-reviews-${userId}-${JSON.stringify(defaultParams)}`;
 
-    if (shouldUseMockApi()) {
-      const mockData = await mockReviewApi.getUserReviews(userId, defaultParams);
-      return transformReviewList(mockData);
-    }
-
-    try {
+try {
       const response = await api.get(`/users/${userId}/reviews`, {
         params: defaultParams,
         cacheKey: useCache ? cacheKey : undefined,
@@ -403,12 +370,7 @@ const reviewApi = {
 
     const cacheKey = `reviews-with-photos-${JSON.stringify(defaultParams)}`;
 
-    if (shouldUseMockApi()) {
-      const mockData = await mockReviewApi.getReviewsWithPhotos(defaultParams);
-      return transformReviewList(mockData);
-    }
-
-    try {
+try {
       const response = await api.get('/reviews', {
         params: defaultParams,
         cacheKey: useCache ? cacheKey : undefined,
@@ -447,12 +409,7 @@ const reviewApi = {
 
     const cacheKey = `reviews-rating-${ratingNum}-${JSON.stringify(defaultParams)}`;
 
-    if (shouldUseMockApi()) {
-      const mockData = await mockReviewApi.getReviewsByRating(ratingNum, defaultParams);
-      return transformReviewList(mockData);
-    }
-
-    try {
+try {
       const response = await api.get('/reviews', {
         params: defaultParams,
         cacheKey: useCache ? cacheKey : undefined,

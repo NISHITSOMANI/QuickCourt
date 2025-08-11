@@ -27,11 +27,6 @@ const venueApi = {
     
     const cacheKey = `venues-${JSON.stringify(defaultParams)}`;
     
-    if (shouldUseMockApi()) {
-      const mockData = await mockVenueApi.getVenues(defaultParams);
-      return transformVenueList(mockData);
-    }
-    
     try {
       const response = await api.get('/venues', { 
         params: defaultParams,
@@ -53,10 +48,17 @@ const venueApi = {
         return transformVenueList(cachedResponse.data);
       }
       
-      // Fallback to mock data if no cache
-      toast.error('Failed to fetch venues. Using demo data.');
-      const mockData = await mockVenueApi.getVenues(defaultParams);
-      return transformVenueList(mockData);
+      // No cache available, return empty results
+      console.warn('No cached venue data available');
+      return {
+        venues: [],
+        pagination: {
+          total: 0,
+          page: params.page || 1,
+          limit: params.limit || 12,
+          totalPages: 0
+        }
+      };
     }
   },
 
@@ -94,11 +96,6 @@ const venueApi = {
     
     const cacheKey = `venue-${id}`;
     
-    if (shouldUseMockApi()) {
-      const mockData = await mockVenueApi.getVenueById(id);
-      return transformVenue(mockData);
-    }
-    
     try {
       const response = await api.get(`/venues/${id}`, {
         cacheKey: useCache ? cacheKey : undefined,
@@ -119,10 +116,9 @@ const venueApi = {
         return transformVenue(cachedResponse.data);
       }
       
-      // Fallback to mock data if no cache
-      toast.error('Failed to fetch venue details. Using demo data.');
-      const mockData = await mockVenueApi.getVenueById(id);
-      return transformVenue(mockData);
+      // No cache available, throw error
+      console.warn('No cached venue data available');
+      throw new Error('Venue not found in cache');
     }
   },
 
@@ -136,17 +132,13 @@ const venueApi = {
       throw new Error('Venue ID is required')
     }
 
-    if (shouldUseMockApi()) {
-      return await mockVenueApi.getVenueCourts(venueId)
-    }
-
     try {
       const response = await api.get(`/venues/${venueId}/courts`)
       return response.data.courts || []
     } catch (error) {
       console.error(`Error fetching courts for venue ${venueId}:`, error)
-      toast.error('Failed to load court information. Using demo data.')
-      return mockVenueApi.getVenueCourts(venueId)
+      toast.error('Failed to load court information.')
+      return []
     }
   },
 
@@ -199,11 +191,6 @@ const venueApi = {
     
     const cacheKey = `venue-${venueId}-reviews-${JSON.stringify(defaultParams)}`;
     
-    if (shouldUseMockApi()) {
-      const mockData = await mockVenueApi.getVenueReviews(venueId, defaultParams);
-      return transformReviewList(mockData);
-    }
-    
     try {
       const response = await api.get(`/venues/${venueId}/reviews`, { 
         params: defaultParams,
@@ -225,10 +212,17 @@ const venueApi = {
         return transformReviewList(cachedResponse.data);
       }
       
-      // Fallback to mock data if no cache
-      toast.error('Failed to fetch reviews. Using demo data.');
-      const mockData = await mockVenueApi.getVenueReviews(venueId, defaultParams);
-      return transformReviewList(mockData);
+      // No cache available, return empty results
+      console.warn('No cached review data available');
+      return {
+        reviews: [],
+        pagination: {
+          total: 0,
+          page: params.page || 1,
+          limit: params.limit || 10,
+          totalPages: 0
+        }
+      };
     }
   },
 
@@ -249,12 +243,6 @@ const venueApi = {
   submitVenueReview: async (venueId, reviewData, { invalidateCache = true } = {}) => {
     if (!venueId || !reviewData) {
       throw new Error('Venue ID and review data are required');
-    }
-    
-    if (shouldUseMockApi()) {
-      const mockData = await mockVenueApi.submitVenueReview(venueId, reviewData);
-      toast.success('Review submitted successfully (demo)');
-      return mockData;
     }
     
     try {

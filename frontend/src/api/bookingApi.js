@@ -14,12 +14,6 @@ const bookingApi = {
    * @param {Object} params - Query parameters (page, limit, status, etc.)
    * @returns {Promise<Object>} - Bookings and pagination info
    */
-  /**
-   * Get user's bookings with optional filters and pagination
-   * @param {Object} [params={}] - Query parameters (page, limit, status, etc.)
-   * @param {boolean} [useCache=true] - Whether to use cached response if available
-   * @returns {Promise<{bookings: Array, pagination: Object}>} - Transformed bookings and pagination info
-   */
   getMyBookings: async (params = {}, useCache = true) => {
     const defaultParams = {
       page: 1,
@@ -29,11 +23,6 @@ const bookingApi = {
     };
     
     const cacheKey = `my-bookings-${JSON.stringify(defaultParams)}`;
-    
-    if (shouldUseMockApi()) {
-      const mockData = await mockBookingApi.getMyBookings(defaultParams);
-      return transformBookingList(mockData);
-    }
     
     try {
       const response = await api.get('/bookings', { 
@@ -63,10 +52,17 @@ const bookingApi = {
         return transformBookingList(cachedResponse.data);
       }
       
-      // Fallback to mock data if no cache
-      toast.error('Failed to load bookings. Using demo data.');
-      const mockData = await mockBookingApi.getMyBookings(defaultParams);
-      return transformBookingList(mockData);
+      // No cache available, return empty results
+      console.warn('No cached booking data available');
+      return {
+        bookings: [],
+        pagination: {
+          total: 0,
+          page: params.page || 1,
+          limit: params.limit || 10,
+          totalPages: 0
+        }
+      };
     }
   },
 
@@ -82,12 +78,6 @@ const bookingApi = {
     }
     
     const cacheKey = `booking-${bookingId}`;
-    
-    if (shouldUseMockApi()) {
-      const mockData = await mockBookingApi.getMyBookings()
-        .then(({ bookings }) => bookings.find(b => b._id === bookingId) || null);
-      return transformBooking(mockData);
-    }
     
     try {
       const response = await api.get(`/bookings/${bookingId}`, {
@@ -129,12 +119,6 @@ const bookingApi = {
   createBooking: async (bookingData, { invalidateCache = true } = {}) => {
     if (!bookingData) {
       throw new Error('Booking data is required');
-    }
-    
-    if (shouldUseMockApi()) {
-      const mockData = await mockBookingApi.createBooking(bookingData);
-      toast.success('Booking created successfully (demo)');
-      return transformBooking(mockData);
     }
     
     try {
@@ -201,12 +185,6 @@ const bookingApi = {
   cancelBooking: async (bookingId, { reason, invalidateCache = true } = {}) => {
     if (!bookingId) {
       throw new Error('Booking ID is required');
-    }
-    
-    if (shouldUseMockApi()) {
-      const mockData = await mockBookingApi.cancelBooking(bookingId);
-      toast.success('Booking cancelled successfully (demo)');
-      return transformBooking(mockData);
     }
     
     try {
@@ -281,12 +259,6 @@ const bookingApi = {
   processPayment: async (bookingId, paymentData, { invalidateCache = true } = {}) => {
     if (!bookingId || !paymentData) {
       throw new Error('Booking ID and payment data are required');
-    }
-    
-    if (shouldUseMockApi()) {
-      const mockData = await mockBookingApi.processPayment(bookingId, paymentData);
-      toast.success('Payment processed successfully (demo)');
-      return transformPayment(mockData);
     }
     
     try {
@@ -365,14 +337,6 @@ const bookingApi = {
     
     const cacheKey = `court-${courtId}-availability-${date}${duration ? `-${duration}` : ''}`;
     
-    if (shouldUseMockApi()) {
-      const mockData = await mockBookingApi.getCourtAvailability(courtId, date, duration);
-      return {
-        ...mockData,
-        slots: mockData.slots.map(slot => transformTimeSlot(slot, courtId))
-      };
-    }
-    
     try {
       const response = await api.get(`/courts/${courtId}/availability`, { 
         params,
@@ -407,12 +371,15 @@ const bookingApi = {
         };
       }
       
-      // Fallback to mock data if no cache
-      toast.error('Failed to load availability. Using demo data.');
-      const mockData = await mockBookingApi.getCourtAvailability(courtId, date, duration);
+      // No cache available, return empty availability
+      console.warn('No cached court availability data');
       return {
-        ...mockData,
-        slots: mockData.slots.map(slot => transformTimeSlot(slot, courtId))
+        courtId,
+        date,
+        duration: duration || 60,
+        slots: [],
+        isAvailable: false,
+        message: 'No availability data available'
       };
     }
   },

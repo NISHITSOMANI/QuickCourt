@@ -14,23 +14,11 @@ export const profileApi = {
    *
    * @async
    * @function getProfile
-   * @returns {Promise} A promise resolving to the user's profile data.
-   */
-  /**
-   * Retrieves the current user's profile information with caching support.
-   * 
-   * @async
-   * @function getProfile
    * @param {boolean} [forceRefresh=false] - Whether to force a fresh fetch
    * @returns {Promise<Object>} A promise resolving to the transformed user profile data.
    */
   getProfile: async (forceRefresh = false) => {
     const cacheKey = 'user-profile';
-    
-    if (shouldUseMockApi()) {
-      const mockData = await mockProfileApi.getProfile();
-      return transformUser(mockData);
-    }
     
     try {
       const response = await api.get('/profile', {
@@ -81,14 +69,6 @@ export const profileApi = {
    * @async
    * @function updateProfile
    * @param {Object} profileData - The updated profile data.
-   * @returns {Promise} A promise resolving to the updated user's profile data.
-   */
-  /**
-   * Updates the current user's profile information.
-   *
-   * @async
-   * @function updateProfile
-   * @param {Object} profileData - The updated profile data.
    * @param {Object} [options] - Additional options
    * @param {boolean} [options.invalidateCache=true] - Whether to invalidate cache after update
    * @returns {Promise<Object>} A promise resolving to the updated user's profile data.
@@ -96,12 +76,6 @@ export const profileApi = {
   updateProfile: async (profileData, { invalidateCache = true } = {}) => {
     if (!profileData || typeof profileData !== 'object') {
       throw new Error('Valid profile data is required');
-    }
-    
-    if (shouldUseMockApi()) {
-      const mockData = await mockProfileApi.updateProfile(profileData);
-      toast.success('Profile updated successfully (demo)');
-      return transformUser(mockData);
     }
     
     try {
@@ -165,11 +139,6 @@ export const profileApi = {
     
     const cacheKey = `user-bookings-${JSON.stringify(defaultParams)}`;
     
-    if (shouldUseMockApi()) {
-      const mockData = await mockProfileApi.getUserBookings(defaultParams);
-      return transformBookingList(mockData);
-    }
-    
     try {
       const response = await api.get('/profile/bookings', { 
         params: defaultParams,
@@ -180,7 +149,7 @@ export const profileApi = {
         }
       });
       
-      return transformBookingList(response.data);
+      return transformBookings(response.data);
     } catch (error) {
       console.error('Error fetching user bookings:', error);
       
@@ -188,7 +157,7 @@ export const profileApi = {
       const cachedResponse = api.getCachedResponse(`GET:/profile/bookings?${new URLSearchParams(defaultParams).toString()}`);
       if (cachedResponse) {
         toast('Using cached booking data', { icon: '⚠️' });
-        return transformBookingList(cachedResponse.data);
+        return transformBookings(cachedResponse.data);
       }
       
       // More specific error messages based on status code
@@ -217,10 +186,6 @@ export const profileApi = {
    */
   getOwnerEarnings: async (params = {}, useCache = true) => {
     const cacheKey = `owner-earnings-${JSON.stringify(params)}`;
-    
-    if (shouldUseMockApi()) {
-      return mockProfileApi.getOwnerEarnings(params);
-    }
     
     try {
       const response = await api.get('/profile/earnings', {
@@ -264,10 +229,6 @@ export const profileApi = {
    */
   getOwnerStats: async (params = {}, useCache = true) => {
     const cacheKey = `owner-stats-${JSON.stringify(params)}`;
-    
-    if (shouldUseMockApi()) {
-      return mockProfileApi.getOwnerStats(params);
-    }
     
     try {
       const response = await api.get('/profile/stats', {
@@ -315,12 +276,6 @@ export const profileApi = {
     
     const formData = new FormData();
     formData.append('avatar', file);
-    
-    if (shouldUseMockApi()) {
-      const mockData = await mockProfileApi.uploadAvatar(file);
-      toast.success('Profile picture updated (demo)');
-      return mockData;
-    }
     
     try {
       const response = await api.post('/profile/avatar', formData, {
