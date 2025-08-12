@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useQuery, useMutation } from 'react-query'
 import { 
   Calendar, 
@@ -13,14 +13,32 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useBooking } from '../context/BookingContext'
-import { venueApi, bookingApi } from '../api'
+import { bookingApi } from '../api/bookingApi'
+import venueApi from '../api/venueApi'
 import { format } from 'date-fns'
 
 const BookingPage = () => {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const location = useLocation()
+  const { user, isAuthenticated } = useAuth()
   const { venueId, courtId } = useParams()
   const { selectedVenue, selectedCourt, setVenue, setCourt } = useBooking()
+
+  // Authentication check - redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error('Please login to make a booking');
+      navigate('/login', { state: { from: location.pathname } });
+      return;
+    }
+    
+    // Role check - only users can make bookings
+    if (user?.role !== 'user') {
+      toast.error('Only registered users can make bookings');
+      navigate('/unauthorized');
+      return;
+    }
+  }, [isAuthenticated, user, navigate]);
   
   // Form state
   const [selectedVenueId, setSelectedVenueId] = useState(selectedVenue?._id || venueId || '')
@@ -166,16 +184,39 @@ const BookingPage = () => {
   const handleBooking = async (e) => {
     e?.preventDefault()
     
-    // Form validation
+    // Critical authentication check
+    if (!isAuthenticated) {
+      toast.error('Please login to make a booking');
+      navigate('/login', { state: { from: location.pathname } });
+      return;
+    }
+
+    // Role-based authorization check
+    if (user?.role !== 'user') {
+      toast.error('Only registered users can make bookings');
+      navigate('/unauthorized');
+      return;
+    }
+    
+    // Comprehensive form validation
     if (!selectedVenueId || !selectedCourtId || !selectedDate || !selectedTime || !duration) {
       toast.error('Please fill in all required fields')
       return
     }
-    
-    if (!user) {
-      toast.error('Please log in to make a booking')
-      navigate('/login', { state: { from: window.location.pathname } })
-      return
+
+    // Date validation - prevent past bookings
+    const selectedDateTime = new Date(`${selectedDate}T${selectedTime}`);
+    const now = new Date();
+    if (selectedDateTime <= now) {
+      toast.error('Cannot book for past dates or times');
+      return;
+    }
+
+    // Duration validation
+    const durationNum = parseInt(duration);
+    if (isNaN(durationNum) || durationNum < 1 || durationNum > 8) {
+      toast.error('Duration must be between 1-8 hours');
+      return;
     }
     
     const selectedCourt = courts.find(c => c._id === selectedCourtId)
@@ -188,6 +229,18 @@ const BookingPage = () => {
     if (!selectedVenue) {
       toast.error('Selected venue not found')
       return
+    }
+
+    // Venue operating hours validation
+    if (selectedVenue.operatingHours) {
+      const bookingTime = selectedTime;
+      const openTime = selectedVenue.operatingHours.open;
+      const closeTime = selectedVenue.operatingHours.close;
+      
+      if (bookingTime < openTime || bookingTime > closeTime) {
+        toast.error(`Venue operates from ${openTime} to ${closeTime}`);
+        return;
+      }
     }
     
     const startTime = new Date(`${selectedDate}T${selectedTime}`)

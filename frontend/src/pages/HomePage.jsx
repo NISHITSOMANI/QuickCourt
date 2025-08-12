@@ -15,7 +15,7 @@ import {
 import SearchBar from '../components/common/SearchBar'
 import VenueCard from '../components/venues/VenueCard'
 import SportsCategories from '../components/common/SportsCategories'
-import { venueApi } from '../api/venueApi'
+import venueApi from '../api/venueApi'
 
 const HomePage = () => {
   const navigate = useNavigate()

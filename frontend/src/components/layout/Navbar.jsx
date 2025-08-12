@@ -31,33 +31,39 @@ const Navbar = () => {
   const getUserDashboardLink = () => {
     switch (user?.role) {
       case 'admin':
-        return '/dashboard/admin'
+        return '/admin'
       case 'owner':
-        return '/dashboard/owner'
+        return '/owner'
       case 'user':
-        return '/dashboard/user'
+        return '/user/my-bookings'
       default:
-        return '/profile'
+        return '/user/profile'
     }
   }
 
   const getUserMenuItems = () => {
     const baseItems = [
       { icon: BarChart3, label: 'Dashboard', path: getUserDashboardLink() },
-      { icon: User, label: 'Profile', path: '/profile' },
     ]
 
     if (user?.role === 'user') {
-      baseItems.splice(1, 0, { icon: Calendar, label: 'My Bookings', path: '/my-bookings' })
+      baseItems.push(
+        { icon: Calendar, label: 'My Bookings', path: '/user/my-bookings' },
+        { icon: User, label: 'Profile', path: '/user/profile' }
+      )
     } else if (user?.role === 'owner') {
-      baseItems.splice(1, 0,
+      baseItems.push(
         { icon: Building2, label: 'My Courts', path: '/owner/courts' },
-        { icon: Calendar, label: 'Bookings', path: '/owner/bookings' }
+        { icon: Calendar, label: 'Bookings', path: '/owner/bookings' },
+        { icon: BarChart3, label: 'Earnings', path: '/owner/earnings' },
+        { icon: Settings, label: 'Settings', path: '/owner/settings' }
       )
     } else if (user?.role === 'admin') {
-      baseItems.splice(1, 0,
+      baseItems.push(
+        { icon: User, label: 'Users', path: '/admin/users' },
         { icon: Building2, label: 'Facilities', path: '/admin/facilities' },
-        { icon: User, label: 'Users', path: '/admin/users' }
+        { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
+        { icon: Settings, label: 'Settings', path: '/admin/settings' }
       )
     }
 

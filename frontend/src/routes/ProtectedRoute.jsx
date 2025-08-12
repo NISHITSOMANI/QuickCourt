@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEffect, useState } from 'react';
-import { toast } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 const ProtectedRoute = ({
   children,
@@ -84,15 +84,22 @@ const ProtectedRoute = ({
     initialCheck
   ]);
 
-  // Show nothing while checking auth or if not authorized
-  if (loading || !initialCheck || !isAuthorized) {
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Show nothing if not authorized yet
+  if (!isAuthorized) {
     return null;
   }
 
   // Only render children if user is authenticated and authorized
   return children;
-
-  return children
 }
 
 export default ProtectedRoute

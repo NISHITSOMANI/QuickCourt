@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { useNavigate } from 'react-router-dom'
 import {
   Calendar,
   Clock,
@@ -8,19 +9,37 @@ import {
   Filter,
   X,
   Star,
-  MessageSquare
+  MessageSquare,
+  AlertTriangle
 } from 'lucide-react'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import { bookingApi } from '../../api/bookingApi'
 import { userApi } from '../../api/dashboardApi'
+import { useAuth } from '../../context/AuthContext'
 import Pagination from '../../components/common/Pagination'
 import toast from 'react-hot-toast'
 
 const MyBookingsPage = () => {
+  const { user, isAuthenticated } = useAuth()
+  const navigate = useNavigate()
   const [currentPage, setCurrentPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const queryClient = useQueryClient()
+
+  // Critical authentication and authorization checks
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error('Please login to view your bookings')
+      navigate('/login')
+      return
+    }
+
+    if (user?.role !== 'user') {
+      toast.error('Access denied. Only users can view bookings')
+      navigate('/unauthorized')
+      return
+    }
+  }, [isAuthenticated, user, navigate])
 
   // Fetch user bookings
   const { data, isLoading, error } = useQuery(
@@ -51,9 +70,39 @@ const MyBookingsPage = () => {
     }
   )
 
-  const handleCancelBooking = (bookingId) => {
-    if (window.confirm('Are you sure you want to cancel this booking?')) {
-      cancelBookingMutation.mutate(bookingId)
+  const handleCancelBooking = (booking) => {
+    // Critical validation checks
+    if (!booking || !booking._id) {
+      toast.error('Invalid booking data')
+      return
+    }
+
+    // Check if booking can be cancelled
+    if (booking.status === 'cancelled') {
+      toast.error('This booking is already cancelled')
+      return
+    }
+
+    if (booking.status === 'completed') {
+      toast.error('Cannot cancel a completed booking')
+      return
+    }
+
+    // Check cancellation time limit (e.g., 24 hours before booking)
+    const bookingDateTime = new Date(`${booking.date}T${booking.startTime}`)
+    const now = new Date()
+    const hoursUntilBooking = (bookingDateTime - now) / (1000 * 60 * 60)
+
+    if (hoursUntilBooking < 24) {
+      toast.error('Bookings can only be cancelled at least 24 hours in advance')
+      return
+    }
+
+    // Enhanced confirmation dialog
+    const confirmMessage = `Are you sure you want to cancel this booking?\n\nVenue: ${booking.venue?.name}\nDate: ${booking.date}\nTime: ${booking.startTime}\n\nThis action cannot be undone.`
+    
+    if (window.confirm(confirmMessage)) {
+      cancelBookingMutation.mutate(booking._id)
     }
   }
 
@@ -96,10 +145,13 @@ const MyBookingsPage = () => {
   }
 
   return (
-    <DashboardLayout
-      title="My Bookings"
-      subtitle="View and manage your court bookings"
-    >
+    <div className="p-6">
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
+        <p className="text-gray-600">View and manage your court bookings</p>
+      </div>
+
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -255,7 +307,7 @@ const MyBookingsPage = () => {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
 

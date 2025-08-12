@@ -6,11 +6,11 @@
  */
 
 // Import all API modules
-import * as authApi from './authApi';
-import * as bookingApi from './bookingApi';
-import * as profileApi from './profileApi';
-import * as reviewApi from './reviewApi';
-import * as venueApi from './venueApi';
+import { authApi } from './authApi';
+import { bookingApi } from './bookingApi';
+import { profileApi } from './profileApi';
+import { reviewApi } from './reviewApi';
+import venueApi from './venueApi';
 
 // Re-export all modules
 export { authApi };

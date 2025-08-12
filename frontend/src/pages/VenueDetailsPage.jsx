@@ -15,10 +15,11 @@ import {
   Phone,
   Mail
 } from 'lucide-react'
-import { venueApi } from '../api/venueApi'
+import venueApi from '../api/venueApi'
 import { reviewApi } from '../api/reviewApi'
 import { useAuth } from '../context/AuthContext'
 import { useBooking } from '../context/BookingContext'
+import toast from 'react-hot-toast'
 import VenueMap from '../components/venues/VenueMap'
 import PaymentMethodModal from '../components/ui/PaymentMethodModal'
 import ReviewForm from '../components/ui/ReviewForm'
@@ -27,7 +28,7 @@ import ErrorBoundary from '../components/common/ErrorBoundary'
 const VenueDetailsPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const { setVenue: setBookingVenue } = useBooking()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
@@ -116,21 +117,41 @@ const VenueDetailsPage = () => {
   const courts = []
 
   const handleBookNow = () => {
+    // Critical authentication check
     if (!isAuthenticated) {
-      // Store venue info and redirect to login page
-      setVenue(venue)
+      toast.error('Please login to book this venue');
+      setBookingVenue(venue);
       navigate('/login', {
         state: {
           from: `/venues/${id}`,
           action: 'booking',
           venue: venue
         }
-      })
-      return
+      });
+      return;
     }
 
-    setVenue(venue)
-    setShowPaymentModal(true)
+    // Role-based authorization check
+    if (user?.role !== 'user') {
+      toast.error('Only registered users can make bookings');
+      navigate('/unauthorized');
+      return;
+    }
+
+    // Venue availability check
+    if (!venue || !venue._id) {
+      toast.error('Venue information not available');
+      return;
+    }
+
+    // Set booking context and navigate to booking page
+    setBookingVenue(venue);
+    navigate(`/user/booking`, {
+      state: {
+        selectedVenue: venue,
+        venueId: venue._id
+      }
+    });
   }
 
   const handlePaymentMethodSelect = (paymentMethod) => {

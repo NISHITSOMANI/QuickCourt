@@ -50,13 +50,34 @@ const ForgotPasswordPage = () => {
   };
 
   const handleResendOtp = async () => {
+    // Critical email validation before resend
+    if (!email) {
+      toast.error('Email address is required');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      const result = await authApi.forgotPassword(email);
+      const result = await authApi.forgotPassword(email.trim().toLowerCase());
       setOtpExpiry(result.otpExpiry);
       toast.success('New OTP sent to your email');
     } catch (error) {
       console.error('Failed to resend OTP:', error);
+      
+      // Enhanced error handling
+      if (error.response?.status === 404) {
+        toast.error('No account found with this email address');
+      } else if (error.response?.status === 429) {
+        toast.error('Too many requests. Please try again later');
+      } else {
+        toast.error('Failed to send OTP. Please try again');
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -12,7 +12,11 @@ import { rateLimitInterceptor, rateLimitErrorInterceptor } from '../utils/apiRat
 
 // Environment configuration
 const isDevelopment = import.meta.env.DEV
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'
+// FORCE CORRECT API BASE URL FOR v1 ENDPOINTS
+const API_BASE_URL = 'http://localhost:5000/api/v1'
+
+// Debug log to verify API base URL
+console.log(' API Base URL FORCED to:', API_BASE_URL)
 
 // Configure API logger in development
 if (isDevelopment) {

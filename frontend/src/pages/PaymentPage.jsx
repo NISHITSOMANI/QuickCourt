@@ -10,19 +10,42 @@ import { ButtonLoader, PageLoader } from '../components/common/LoadingSpinner';
 const PaymentPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const { selectedVenue, selectedCourt } = useBooking()
 
   // Get booking data from navigation state
   const bookingData = location.state?.bookingData;
 
-  // Redirect if no booking data
+  // Authentication and authorization checks
   useEffect(() => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.error('Please login to complete payment');
+      navigate('/login', { state: { from: location.pathname } });
+      return;
+    }
+
+    // Check if user has proper role
+    if (user?.role !== 'user') {
+      toast.error('Only registered users can make payments');
+      navigate('/unauthorized');
+      return;
+    }
+
+    // Check if booking data exists
     if (!bookingData) {
       toast.error('No booking data found. Please start over.');
       navigate('/venues');
+      return;
     }
-  }, [bookingData, navigate]);
+
+    // Validate booking data structure
+    if (!bookingData.venueId || !bookingData.courtId || !bookingData.date || !bookingData.timeSlot) {
+      toast.error('Invalid booking data. Please start over.');
+      navigate('/venues');
+      return;
+    }
+  }, [isAuthenticated, user, bookingData, navigate, location.pathname]);
 
   const [paymentMethod, setPaymentMethod] = useState('card')
   const [cardDetails, setCardDetails] = useState({
@@ -82,13 +105,66 @@ const PaymentPage = () => {
   }
 
   const handlePayment = async () => {
+    // Critical authentication re-check before payment
+    if (!isAuthenticated) {
+      toast.error('Please login to complete payment');
+      navigate('/login', { state: { from: location.pathname } });
+      return;
+    }
+
+    // Role-based authorization re-check
+    if (user?.role !== 'user') {
+      toast.error('Only registered users can make payments');
+      navigate('/unauthorized');
+      return;
+    }
+
     if (!bookingData) {
       toast.error('No booking data found')
       return
     }
 
-    // Validate payment method
+    // Comprehensive payment method validation
     if (!paymentMethod) {
+      toast.error('Please select a payment method');
+      return;
+    }
+
+    // Card details validation for card payments
+    if (paymentMethod === 'card') {
+      if (!cardDetails.cardNumber || !cardDetails.expiryDate || !cardDetails.cvv || !cardDetails.cardholderName) {
+        toast.error('Please fill in all card details');
+        return;
+      }
+
+      // Basic card number validation
+      const cardNumber = cardDetails.cardNumber.replace(/\s/g, '');
+      if (cardNumber.length < 13 || cardNumber.length > 19) {
+        toast.error('Invalid card number');
+        return;
+      }
+
+      // CVV validation
+      if (cardDetails.cvv.length < 3 || cardDetails.cvv.length > 4) {
+        toast.error('Invalid CVV');
+        return;
+      }
+
+      // Expiry date validation
+      const [month, year] = cardDetails.expiryDate.split('/');
+      const currentDate = new Date();
+      const expiryDate = new Date(2000 + parseInt(year), parseInt(month) - 1);
+      
+      if (expiryDate <= currentDate) {
+        toast.error('Card has expired');
+        return;
+      }
+    }
+
+    // Booking data validation
+    if (!bookingData.totalAmount || bookingData.totalAmount <= 0) {
+      toast.error('Invalid booking amount');
+      return;
     }
 
     setPaymentStatus('processing');

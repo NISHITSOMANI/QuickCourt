@@ -5,7 +5,7 @@ import { Search, SlidersHorizontal, Grid, List } from 'lucide-react'
 import VenueCard from '../components/venues/VenueCard'
 import FilterPanel from '../components/common/FilterPanel'
 import Pagination from '../components/common/Pagination'
-import { venueApi } from '../api/venueApi'
+import venueApi from '../api/venueApi'
 
 const VenuesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()

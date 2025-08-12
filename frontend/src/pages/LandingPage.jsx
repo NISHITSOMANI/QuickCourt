@@ -16,6 +16,9 @@ const LandingPage = () => {
   const [currentQuote, setCurrentQuote] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
 
+  // Debug log to ensure component is rendering
+  console.log('LandingPage component is rendering - this should show in browser console')
+
   const sportsQuotes = [
     {
       text: "Champions aren't made in the gyms. Champions are made from something deep inside them - a desire, a dream, a vision.",

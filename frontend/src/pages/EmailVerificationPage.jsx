@@ -12,6 +12,7 @@ const EmailVerificationPage = () => {
   const [resendLoading, setResendLoading] = useState(false)
   const [timeLeft, setTimeLeft] = useState(60)
   const [canResend, setCanResend] = useState(false)
+  const [verificationCode, setVerificationCode] = useState('')
   
   const email = searchParams.get('email') || 'user@example.com'
   
@@ -53,19 +54,58 @@ const EmailVerificationPage = () => {
 
   const onSubmit = async (data) => {
     const code = Object.values(data).join('')
-    if (code.length !== 6) {
+    
+    // Critical input validation
+    if (!code || code.length !== 6) {
       toast.error('Please enter all 6 digits')
+      return
+    }
+
+    // Numeric validation
+    if (!/^\d{6}$/.test(code)) {
+      toast.error('Verification code must contain only numbers')
+      return
+    }
+
+    // Email validation
+    if (!email) {
+      toast.error('Email address is required for verification')
+      navigate('/register')
       return
     }
 
     setIsLoading(true)
     try {
-      // Call verification API
-      await authApi.verifyEmail({ email, code })
-      toast.success('Email verified successfully!')
-      navigate('/login')
+      const response = await authApi.verifyEmail({
+        email: email.trim().toLowerCase(),
+        code: code.trim()
+      })
+
+      if (response.data.success) {
+        toast.success('Email verified successfully!')
+        
+        navigate('/login', {
+          state: {
+            message: 'Your email has been verified. You can now login.',
+            email: email
+          }
+        })
+      } else {
+        toast.error('Verification failed. Please try again.')
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid verification code')
+      console.error('Verification error:', error)
+      
+      // Enhanced error handling
+      if (error.response?.status === 400) {
+        toast.error('Invalid verification code. Please check and try again.')
+      } else if (error.response?.status === 410) {
+        toast.error('Verification code has expired. Please request a new one.')
+      } else if (error.response?.status === 429) {
+        toast.error('Too many verification attempts. Please try again later.')
+      } else {
+        toast.error(error.response?.data?.message || 'Verification failed. Please try again.')
+      }
     } finally {
       setIsLoading(false)
     }

@@ -160,9 +160,15 @@ export const AuthProvider = ({ children }) => {
     return Promise.reject(error);
   }, []);
   
-  // Check if user is authenticated on app load
+  // Check if user is authenticated on app load - NO REDIRECTS FOR LANDING PAGE
   useEffect(() => {
     const checkAuth = async () => {
+      // Skip auth check if on landing page to prevent redirects
+      if (window.location.pathname === '/') {
+        dispatch({ type: 'AUTH_FAIL', payload: null });
+        return;
+      }
+
       const token = localStorage.getItem('token');
       const refreshToken = localStorage.getItem('refreshToken');
       
@@ -251,18 +257,19 @@ export const AuthProvider = ({ children }) => {
   }, [state.isRefreshing]);
   
   // Get dashboard route based on user role
-  const getDashboardRoute = useCallback((userRole) => {
+  const getDashboardRoute = useCallback((role = null) => {
+    const userRole = role || state.user?.role;
     switch (userRole) {
       case 'admin':
-        return '/admin'; // Changed from '/admin/dashboard' to match route config
+        return '/admin';
       case 'owner':
-        return '/owner'; // Changed from '/owner/dashboard' to match route config
+        return '/owner';
       case 'user':
-        return '/user/booking'; // Changed to a valid user route
+        return '/user/my-bookings';
       default:
         return '/';
     }
-  }, []);
+  }, [state.user]);
 
   // Login user
   const login = useCallback(async (credentials, redirectTo = null) => {

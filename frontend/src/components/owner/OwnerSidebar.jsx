@@ -1,26 +1,31 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
-  HomeIcon,
-  UserGroupIcon,
-  CalendarIcon,
-  CurrencyDollarIcon,
-  CogIcon,
-  ArrowLeftOnRectangleIcon,
-  BuildingStorefrontIcon,
-} from '@heroicons/react/24/outline';
+  Home,
+  Users,
+  Calendar,
+  DollarSign,
+  Settings,
+  LogOut,
+  Building2,
+} from 'lucide-react';
 
 const OwnerSidebar = () => {
   const location = useLocation();
+  const { logout } = useAuth();
   
   const navigation = [
-    { name: 'Dashboard', href: '/owner', icon: HomeIcon, current: location.pathname === '/owner' },
-    { name: 'My Courts', href: '/owner/courts', icon: BuildingStorefrontIcon, current: location.pathname.startsWith('/owner/courts') },
-    { name: 'Bookings', href: '/owner/bookings', icon: CalendarIcon, current: location.pathname.startsWith('/owner/bookings') },
-    { name: 'Earnings', href: '/owner/earnings', icon: CurrencyDollarIcon, current: location.pathname.startsWith('/owner/earnings') },
-    { name: 'Customers', href: '/owner/customers', icon: UserGroupIcon, current: location.pathname.startsWith('/owner/customers') },
-    { name: 'Settings', href: '/owner/settings', icon: CogIcon, current: location.pathname.startsWith('/owner/settings') },
+    { name: 'Dashboard', href: '/owner', icon: Home, current: location.pathname === '/owner' },
+    { name: 'My Courts', href: '/owner/courts', icon: Building2, current: location.pathname.startsWith('/owner/courts') },
+    { name: 'Bookings', href: '/owner/bookings', icon: Calendar, current: location.pathname.startsWith('/owner/bookings') },
+    { name: 'Earnings', href: '/owner/earnings', icon: DollarSign, current: location.pathname.startsWith('/owner/earnings') },
+    { name: 'Settings', href: '/owner/settings', icon: Settings, current: location.pathname.startsWith('/owner/settings') },
   ];
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <div className="flex flex-col w-64 h-full bg-emerald-700">
@@ -51,19 +56,19 @@ const OwnerSidebar = () => {
         </nav>
       </div>
       <div className="flex-shrink-0 flex border-t border-emerald-800 p-4">
-        <NavLink
-          to="/logout"
-          className="group flex-shrink-0 w-full group block"
+        <button
+          onClick={handleLogout}
+          className="group flex-shrink-0 w-full group block hover:bg-emerald-600 rounded-md p-2 transition-colors"
         >
           <div className="flex items-center">
             <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-emerald-600 group-hover:bg-emerald-500">
-              <ArrowLeftOnRectangleIcon className="h-5 w-5 text-white" aria-hidden="true" />
+              <LogOut className="h-5 w-5 text-white" aria-hidden="true" />
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-white">Logout</p>
             </div>
           </div>
-        </NavLink>
+        </button>
       </div>
     </div>
   );

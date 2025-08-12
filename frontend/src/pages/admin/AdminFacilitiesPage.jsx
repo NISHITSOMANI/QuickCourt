@@ -11,7 +11,7 @@ import {
   Search
 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { venueApi } from '../../api/venueApi'
+import venueApi from '../../api/venueApi'
 import { adminApi } from '../../api/dashboardApi'
 import Pagination from '../../components/common/Pagination'
 import toast from 'react-hot-toast'

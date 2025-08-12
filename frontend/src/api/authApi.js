@@ -73,6 +73,9 @@ export const authApi = {
     }
 
     try {
+      console.log('Making login request to:', '/auth/login');
+      console.log('API base URL should be:', api.defaults.baseURL);
+      
       const response = await api.post('/auth/login', credentials, {
         headers: {
           'Content-Type': 'application/json'
@@ -85,6 +88,12 @@ export const authApi = {
       });
 
       console.log('Login response:', response); // Debug log
+      
+      // Handle error responses first
+      if (!response.data || response.data.success === false) {
+        const errorMessage = response.data?.message || 'Login failed';
+        throw new Error(errorMessage);
+      }
       
       // Handle different response formats
       let user, accessToken;

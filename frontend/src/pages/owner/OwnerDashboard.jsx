@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from 'react-query'
+import { useNavigate } from 'react-router-dom'
 import { 
   BarChart3, 
   DollarSign, 
@@ -9,15 +10,34 @@ import {
   Building2,
   Clock,
   Star,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from 'lucide-react'
 import { profileApi } from '../../api/profileApi'
-import { venueApi } from '../../api/venueApi'
+import venueApi from '../../api/venueApi'
+import { useAuth } from '../../context/AuthContext'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import toast from 'react-hot-toast'
 
 const OwnerDashboard = () => {
+  const { user, isAuthenticated } = useAuth()
+  const navigate = useNavigate()
   const [dateRange, setDateRange] = useState('7') // days
+
+  // Critical authentication and authorization checks
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error('Please login to access owner dashboard')
+      navigate('/login')
+      return
+    }
+
+    if (user?.role !== 'owner') {
+      toast.error('Access denied. Only venue owners can access this dashboard')
+      navigate('/unauthorized')
+      return
+    }
+  }, [isAuthenticated, user, navigate])
 
   // Fetch owner stats
   const { data: stats, isLoading: statsLoading } = useQuery(

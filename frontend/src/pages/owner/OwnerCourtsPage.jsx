@@ -12,7 +12,7 @@ import {
   Building2
 } from 'lucide-react'
 import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { venueApi } from '../../api/venueApi'
+import venueApi from '../../api/venueApi'
 import { ownerApi } from '../../api/dashboardApi'
 import toast from 'react-hot-toast'
 

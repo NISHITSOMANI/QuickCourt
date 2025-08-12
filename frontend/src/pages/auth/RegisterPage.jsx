@@ -31,10 +31,98 @@ const RegisterPage = () => {
   }, [clearError])
 
   const onSubmit = async (data) => {
-    const { confirmPassword, ...userData } = data
-    const result = await registerUser(userData)
-    if (result.success) {
-      navigate('/home')
+    // Critical input validation and sanitization
+    if (!data.name || !data.email || !data.password || !data.confirmPassword) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Name validation
+    if (data.name.trim().length < 2) {
+      toast.error('Name must be at least 2 characters long');
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    // Password strength validation
+    if (data.password.length < 8) {
+      toast.error('Password must be at least 8 characters long');
+      return;
+    }
+
+    // Password complexity validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+    if (!passwordRegex.test(data.password)) {
+      toast.error('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
+      return;
+    }
+
+    // Password confirmation validation
+    if (data.password !== data.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    // Role validation
+    const allowedRoles = ['user', 'owner'];
+    if (!allowedRoles.includes(data.role)) {
+      toast.error('Invalid role selected');
+      return;
+    }
+
+    // Phone validation (if provided)
+    if (data.phone && data.phone.trim()) {
+      const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+      if (!phoneRegex.test(data.phone.replace(/\s/g, ''))) {
+        toast.error('Please enter a valid phone number');
+        return;
+      }
+    }
+
+    // Sanitize input data
+    const { confirmPassword, ...userData } = data;
+    const sanitizedData = {
+      ...userData,
+      name: userData.name.trim(),
+      email: userData.email.trim().toLowerCase(),
+      password: userData.password.trim(),
+      phone: userData.phone ? userData.phone.trim() : undefined
+    };
+
+    try {
+      const result = await registerUser(sanitizedData);
+      if (result.success) {
+        toast.success('Registration successful! Please check your email for verification.');
+        
+        // Security: Clear sensitive data from memory
+        delete sanitizedData.password;
+        
+        navigate('/email-verification', { 
+          state: { 
+            email: sanitizedData.email,
+            message: 'Please check your email and enter the verification code.'
+          }
+        });
+      } else {
+        toast.error(result?.error || 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      
+      // Enhanced error handling with specific messages
+      if (error.response?.status === 409) {
+        toast.error('An account with this email already exists. Please login instead.');
+      } else if (error.response?.status === 422) {
+        toast.error('Invalid registration data. Please check your information.');
+      } else {
+        toast.error('An error occurred during registration. Please try again.');
+      }
     }
   }
 
@@ -145,7 +233,6 @@ const RegisterPage = () => {
                 >
                   <option value="user">Player - Book courts and play</option>
                   <option value="owner">Venue Owner - List and manage venues</option>
-                  <option value="admin">Administrator - Manage platform</option>
                 </select>
               </div>
               {errors.role && (

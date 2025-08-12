@@ -1,22 +1,37 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import OwnerSidebar from '../components/owner/OwnerSidebar';
 
 const OwnerLayout = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if not owner
+  // Comprehensive authentication and authorization check
   React.useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    
     if (user?.role !== 'owner') {
       navigate('/unauthorized');
+      return;
     }
-  }, [user, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
-  if (!user || user.role !== 'owner') {
-    return null; // or a loading spinner
+  // Show loading while checking auth
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Final role check
+  if (user.role !== 'owner') {
+    return null;
   }
 
   return (
@@ -45,8 +60,6 @@ const OwnerLayout = ({ children }) => {
   );
 };
 
-OwnerLayout.propTypes = {
-  children: PropTypes.node.isRequired,
-};
+
 
 export default OwnerLayout;

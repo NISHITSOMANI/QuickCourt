@@ -1,22 +1,42 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from 'react-query'
+import { useNavigate } from 'react-router-dom'
 import { 
+  BarChart3, 
   Users, 
   Building2, 
+  DollarSign, 
+  TrendingUp, 
   Calendar, 
-  DollarSign,
-  TrendingUp,
+  AlertTriangle,
   AlertCircle,
   CheckCircle,
   Clock,
   Loader2
 } from 'lucide-react'
 import { adminApi } from '../../api/dashboardApi'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
+import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
 const AdminDashboard = () => {
+  const { user, isAuthenticated } = useAuth()
+  const navigate = useNavigate()
   const [dateRange, setDateRange] = useState('30') // days
+
+  // Critical authentication and authorization checks
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error('Please login to access admin dashboard')
+      navigate('/login')
+      return
+    }
+
+    if (user?.role !== 'admin') {
+      toast.error('Access denied. Only administrators can access this dashboard')
+      navigate('/unauthorized')
+      return
+    }
+  }, [isAuthenticated, user, navigate])
 
   // Fetch admin analytics data
   const { data: analyticsData, isLoading: isLoadingAnalytics, error: analyticsError } = useQuery(
@@ -126,20 +146,25 @@ const AdminDashboard = () => {
 
   if (isLoadingAnalytics) {
     return (
-      <DashboardLayout title="Admin Dashboard" subtitle="Monitor platform activity and manage system operations">
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600">Monitor platform activity and manage system operations</p>
+        </div>
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="ml-2 text-gray-600">Loading analytics...</span>
+          <span className="ml-2 text-gray-600">Loading dashboard data...</span>
         </div>
-      </DashboardLayout>
+      </div>
     )
   }
 
   return (
-    <DashboardLayout 
-      title="Admin Dashboard" 
-      subtitle="Monitor platform activity and manage system operations"
-    >
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        <p className="text-gray-600">Monitor platform activity and manage system operations</p>
+      </div>
       <div>
 
         {/* Date Range Filter */}
@@ -289,7 +314,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
 

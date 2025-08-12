@@ -1,5 +1,4 @@
-import { toast } from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 /**
  * Standardized API error handler for the application
@@ -40,14 +39,13 @@ export const handleApiError = (error, options = {}) => {
 
     // Handle specific status codes
     if (status === 401) {
-      // Unauthorized - clear auth and redirect to login
+      // Unauthorized - clear auth tokens
       localStorage.removeItem('token');
-      const navigate = useNavigate();
-      navigate('/login', { 
-        state: { from: window.location.pathname },
-        replace: true 
-      });
+      localStorage.removeItem('refreshToken');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('refreshToken');
       errorInfo.message = 'Your session has expired. Please log in again.';
+      errorInfo.requiresAuth = true;
     } else if (status === 403) {
       errorInfo.message = 'You do not have permission to perform this action.';
     } else if (status === 404) {

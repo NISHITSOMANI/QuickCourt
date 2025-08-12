@@ -90,18 +90,49 @@ export const BookingProvider = ({ children }) => {
   const [state, dispatch] = useReducer(bookingReducer, initialState)
 
   const setVenue = (venue) => {
+    // Critical venue validation
+    if (!venue || !venue._id) {
+      console.error('Invalid venue data provided to setVenue:', venue);
+      return;
+    }
     dispatch({ type: 'SET_VENUE', payload: venue })
   }
 
   const setCourt = (court) => {
+    // Critical court validation
+    if (!court || !court._id) {
+      console.error('Invalid court data provided to setCourt:', court);
+      return;
+    }
     dispatch({ type: 'SET_COURT', payload: court })
   }
 
   const setDate = (date) => {
+    // Critical date validation
+    if (!date) {
+      console.error('Invalid date provided to setDate:', date);
+      return;
+    }
+    
+    // Prevent past date bookings
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+      console.error('Cannot set past date for booking:', date);
+      return;
+    }
+    
     dispatch({ type: 'SET_DATE', payload: date })
   }
 
   const setTimeSlot = (timeSlot) => {
+    // Critical time slot validation
+    if (!timeSlot || !timeSlot.startTime || !timeSlot.endTime) {
+      console.error('Invalid time slot provided to setTimeSlot:', timeSlot);
+      return;
+    }
     dispatch({ type: 'SET_TIME_SLOT', payload: timeSlot })
   }
 
