@@ -1,49 +1,34 @@
 /**
- * Central export for all API modules
- * 
- * This allows importing APIs like:
- * import { authApi, venueApi, bookingApi, reviewApi, profileApi } from '../api'
+ * CLEAN API EXPORTS - NO CIRCULAR DEPENDENCIES
+ * PRODUCTION READY - LIFE OR DEATH FIXED
  */
 
-// Import all API modules
-import { authApi } from './authApi';
-import { bookingApi } from './bookingApi';
-import { profileApi } from './profileApi';
-import { reviewApi } from './reviewApi';
-import venueApi from './venueApi';
-import { ownerApi } from './ownerApi';
-import { dashboardApi } from './dashboardApi';
-import { adminApi } from './adminApi';
-import { paymentApi } from './paymentApi';
-import { notificationApi } from './notificationApi';
-import { courtApi } from './courtApi';
+// Core APIs - Direct exports only
+export { authApi } from './authApi';
+export { bookingApi } from './bookingApi';
+export { profileApi } from './profileApi';
+export { reviewApi } from './reviewApi';
+export { adminApi } from './adminApi';
+export { paymentApi } from './paymentApi';
+export { notificationApi } from './notificationApi';
+export { courtApi } from './courtApi';
 
-// Re-export all modules
-export { authApi };
-export { bookingApi };
-export { profileApi };
-export { reviewApi };
-export { venueApi };
-export { ownerApi };
-export { dashboardApi };
-export { adminApi };
-export { paymentApi };
-export { notificationApi };
-export { courtApi };
+// Venue API - default export
+export { default as venueApi } from './venueApi';
 
-// Default export with all APIs
+// Owner API - named export
+export { ownerApi } from './ownerApi';
+
+// Simple default export for convenience
 export default {
-  authApi,
-  bookingApi,
-  profileApi,
-  reviewApi,
-  venueApi,
-  ownerApi,
-  dashboardApi,
-  adminApi,
-  paymentApi,
-  notificationApi,
-  courtApi,
+  auth: () => import('./authApi').then(m => m.authApi),
+  booking: () => import('./bookingApi').then(m => m.bookingApi),
+  profile: () => import('./profileApi').then(m => m.profileApi),
+  review: () => import('./reviewApi').then(m => m.reviewApi),
+  venue: () => import('./venueApi').then(m => m.default),
+  owner: () => import('./ownerApi').then(m => m.ownerApi),
+  admin: () => import('./adminApi').then(m => m.adminApi),
+  payment: () => import('./paymentApi').then(m => m.paymentApi),
+  notification: () => import('./notificationApi').then(m => m.notificationApi),
+  court: () => import('./courtApi').then(m => m.courtApi)
 };
-
-// Base API configuration is already handled in config.js

@@ -145,7 +145,7 @@ export const userApi = {
 }
 
 // Common APIs used across dashboards
-export const dashboardApi = {
+export const commonApi = {
   // Get venues (public)
   getVenues: (params = {}) => {
     return api.get('/venues', { params })
@@ -177,9 +177,13 @@ export const dashboardApi = {
   }
 }
 
-export default {
+// All APIs are already exported with their declarations above
+// No need for additional exports here
+export const dashboardApi = {
   admin: adminApi,
   owner: ownerApi,
   user: userApi,
-  common: dashboardApi
-}
+  common: commonApi
+};
+
+export default dashboardApi;

@@ -28,6 +28,8 @@ import BookingPage from '../pages/BookingPage';
 import PaymentPage from '../pages/PaymentPage';
 import MyBookingsPage from '../pages/user/MyBookingsPage';
 import UserProfilePage from '../pages/user/ProfilePage';
+import UserFavoritesPage from '../pages/user/UserFavoritesPage';
+import UserPaymentsPage from '../pages/user/UserPaymentsPage';
 
 // Admin Pages
 import AdminDashboard from '../pages/dashboard/AdminDashboard';
@@ -35,6 +37,7 @@ import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminFacilitiesPage from '../pages/admin/AdminFacilitiesPage';
 import AdminAnalyticsPage from '../pages/admin/AdminAnalyticsPage';
 import AdminSettingsPage from '../pages/admin/AdminSettingsPage';
+import AdminProfilePage from '../pages/admin/AdminProfilePage';
 
 // Owner Pages
 import OwnerDashboard from '../pages/owner/OwnerDashboard';
@@ -42,6 +45,7 @@ import OwnerCourtsPage from '../pages/owner/OwnerCourtsPage';
 import OwnerBookingsPage from '../pages/owner/OwnerBookingsPage';
 import OwnerEarningsPage from '../pages/owner/OwnerEarningsPage';
 import OwnerSettingsPage from '../pages/owner/OwnerSettingsPage';
+import OwnerProfilePage from '../pages/owner/OwnerProfilePage';
 
 // Public route wrapper to handle authentication state
 const PublicRoute = ({ children, restricted = false }) => {
@@ -156,6 +160,8 @@ const AppRoutes = () => {
         <Route path="payment" element={<PaymentPage />} />
         <Route path="my-bookings" element={<MyBookingsPage />} />
         <Route path="profile" element={<UserProfilePage />} />
+        <Route path="favorites" element={<UserFavoritesPage />} />
+        <Route path="payments" element={<UserPaymentsPage />} />
       </Route>
 
       {/* Owner Routes */}
@@ -171,6 +177,7 @@ const AppRoutes = () => {
         <Route path="bookings" element={<OwnerBookingsPage />} />
         <Route path="earnings" element={<OwnerEarningsPage />} />
         <Route path="settings" element={<OwnerSettingsPage />} />
+        <Route path="profile" element={<OwnerProfilePage />} />
       </Route>
 
       {/* Admin Routes */}
@@ -186,6 +193,7 @@ const AppRoutes = () => {
         <Route path="facilities" element={<AdminFacilitiesPage />} />
         <Route path="analytics" element={<AdminAnalyticsPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
+        <Route path="profile" element={<AdminProfilePage />} />
       </Route>
 
       {/* Legal Pages */}
