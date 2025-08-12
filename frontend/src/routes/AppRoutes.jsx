@@ -70,8 +70,17 @@ const PublicRoute = ({ children, restricted = false }) => {
 
 // Role-based route wrapper
 const RoleBasedRoute = ({ allowedRoles, children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const location = useLocation();
+  
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
@@ -144,7 +153,7 @@ const AppRoutes = () => {
       </Route>
 
       {/* User Routes */}
-      <Route element={
+      <Route path="/user" element={
         <RoleBasedRoute allowedRoles={['user']}>
           <UserLayout>
             <Outlet />
@@ -152,30 +161,29 @@ const AppRoutes = () => {
         </RoleBasedRoute>
       }>
         <Route index element={<Navigate to="/user/my-bookings" replace />} />
-        <Route path="/user/booking" element={<BookingPage />} />
-        <Route path="/user/payment" element={<PaymentPage />} />
-        <Route path="/user/my-bookings" element={<MyBookingsPage />} />
-        <Route path="/user/profile" element={<UserProfilePage />} />
+        <Route path="booking" element={<BookingPage />} />
+        <Route path="payment" element={<PaymentPage />} />
+        <Route path="my-bookings" element={<MyBookingsPage />} />
+        <Route path="profile" element={<UserProfilePage />} />
       </Route>
 
       {/* Owner Routes */}
-      <Route element={
+      <Route path="/owner" element={
         <RoleBasedRoute allowedRoles={['owner']}>
           <OwnerLayout>
             <Outlet />
           </OwnerLayout>
         </RoleBasedRoute>
       }>
-        <Route index element={<Navigate to="/owner" replace />} />
-        <Route path="/owner" element={<OwnerDashboard />} />
-        <Route path="/owner/courts" element={<OwnerCourtsPage />} />
-        <Route path="/owner/bookings" element={<OwnerBookingsPage />} />
-        <Route path="/owner/earnings" element={<OwnerEarningsPage />} />
-        <Route path="/owner/settings" element={<OwnerSettingsPage />} />
+        <Route index element={<OwnerDashboard />} />
+        <Route path="courts" element={<OwnerCourtsPage />} />
+        <Route path="bookings" element={<OwnerBookingsPage />} />
+        <Route path="earnings" element={<OwnerEarningsPage />} />
+        <Route path="settings" element={<OwnerSettingsPage />} />
       </Route>
 
       {/* Admin Routes */}
-      <Route element={
+      <Route path="/admin" element={
         <RoleBasedRoute allowedRoles={['admin']}>
           <AdminLayout>
             <Outlet />
@@ -183,11 +191,10 @@ const AppRoutes = () => {
         </RoleBasedRoute>
       }>
         <Route index element={<AdminDashboard />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/users" element={<AdminUsersPage />} />
-        <Route path="/admin/facilities" element={<AdminFacilitiesPage />} />
-        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-        <Route path="/admin/settings" element={<AdminSettingsPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
+        <Route path="facilities" element={<AdminFacilitiesPage />} />
+        <Route path="analytics" element={<AdminAnalyticsPage />} />
+        <Route path="settings" element={<AdminSettingsPage />} />
       </Route>
 
       {/* Legal Pages */}

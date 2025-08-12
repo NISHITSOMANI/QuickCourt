@@ -121,11 +121,21 @@ export const authApi = {
         throw new Error('Invalid login response: Missing user or token');
       }
       
+      // Ensure user has a role before transforming
+      if (!user.role) {
+        console.warn('User role is missing in login response, defaulting to "user"');
+        user.role = 'user'; // Default role
+      }
+      
       // Transform user data and return with tokens
+      const transformedUser = transformUser(user);
+      console.log('Transformed user after login:', transformedUser);
+      
       return {
         data: {
-          user: transformUser(user),
-          accessToken: accessToken
+          user: transformedUser,
+          accessToken: accessToken,
+          token: accessToken // For backward compatibility
         }
       };
     } catch (error) {

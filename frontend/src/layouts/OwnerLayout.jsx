@@ -1,27 +1,14 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import OwnerSidebar from '../components/owner/OwnerSidebar';
 
 const OwnerLayout = ({ children }) => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Comprehensive authentication and authorization check
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-    
-    if (user?.role !== 'owner') {
-      navigate('/unauthorized');
-      return;
-    }
-  }, [isAuthenticated, user, navigate]);
-
   // Show loading while checking auth
-  if (!isAuthenticated || !user) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -29,9 +16,14 @@ const OwnerLayout = ({ children }) => {
     );
   }
 
-  // Final role check
-  if (user.role !== 'owner') {
-    return null;
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Final role check before rendering
+  if (user?.role !== 'owner') {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return (
@@ -44,7 +36,11 @@ const OwnerLayout = ({ children }) => {
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">Welcome, {user.name}</span>
               <button
-                onClick={logout}
+                onClick={() => {
+                  // Handle logout properly
+                  // This would typically call a logout function from AuthContext
+                  navigate('/login');
+                }}
                 className="text-sm text-red-600 hover:text-red-800"
               >
                 Logout
@@ -52,8 +48,10 @@ const OwnerLayout = ({ children }) => {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
+        <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

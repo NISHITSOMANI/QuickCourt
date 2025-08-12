@@ -4,18 +4,46 @@ import toast from 'react-hot-toast';
 import { api } from '../api/config';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-// Helper function to transform user data
-const transformUser = (user) => {
-  if (!user) return null;
-  return {
-    id: user._id || user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    avatar: user.avatar,
-    isVerified: user.isVerified,
+// Helper function to transform user data from various API response formats
+const transformUser = (userData) => {
+  if (!userData) return null;
+  
+  // Handle different user data structures from various API responses
+  let user = userData;
+  
+  // If user data is nested under a 'user' property
+  if (userData.user && typeof userData.user === 'object') {
+    user = { ...userData.user };
+  }
+  
+  // If user data is in a 'data' property (common in some API responses)
+  if (userData.data && typeof userData.data === 'object') {
+    user = { ...userData.data };
+  }
+  
+  // Ensure we have a valid user object
+  if (!user || typeof user !== 'object') {
+    console.error('Invalid user data in transformUser:', userData);
+    return null;
+  }
+  
+  // Extract and normalize user properties
+  const transformedUser = {
+    id: user._id || user.id || null,
+    name: user.name || user.fullName || '',
+    email: user.email || '',
+    // Role normalization - ensure it's always lowercase and has a default
+    role: (user.role || '').toLowerCase() || 'user',
+    avatar: user.avatar || user.profilePicture || '',
+    isVerified: Boolean(user.isVerified || user.verified || false),
+    // Preserve all other user properties
     ...user
   };
+  
+  // Log transformation for debugging
+  console.log('Transformed user data:', transformedUser);
+  
+  return transformedUser;
 };
 
 const AuthContext = createContext();
@@ -280,49 +308,97 @@ export const AuthProvider = ({ children }) => {
       const response = await authApi.login(credentials);
       console.log('Login response:', response);
       
-      // Handle different response formats
+      // Extract user and token from response (handling different formats)
       let user, accessToken, refreshToken;
       
       // Format 1: Direct response with user and token
-      if (response?.data?.user && response?.data?.token) {
+      if (response?.data?.user && (response?.data?.token || response?.data?.accessToken)) {
         user = response.data.user;
-        accessToken = response.data.token;
+        accessToken = response.data.token || response.data.accessToken;
       }
       // Format 2: Nested data object with user and accessToken
       else if (response?.data?.data?.user && response?.data?.data?.accessToken) {
         user = response.data.data.user;
         accessToken = response.data.data.accessToken;
       }
-      // Format 3: Direct accessToken and user
+      // Format 3: Direct accessToken and user in response.data
       else if (response?.data?.accessToken && response?.data?.user) {
         user = response.data.user;
         accessToken = response.data.accessToken;
+      }
+      
+      // If we still don't have a user, try to get it from the response data
+      if ((!user || !accessToken) && response?.data) {
+        // Try to extract user from response data
+        user = response.data.user || response.data.data || response.data;
+        accessToken = response.data.token || response.data.accessToken || accessToken;
+      }
+      
+      // Ensure we have a valid user object with role
+      if (!user || typeof user !== 'object') {
+        console.error('Invalid user data in login response:', user);
+        throw new Error('Invalid user data received from server');
+      }
+      
+      // Transform user data to ensure consistent format
+      user = transformUser(user);
+      
+      // Log the transformed user for debugging
+      console.log('Transformed user after login:', user);
+      
+      // Ensure user has a role
+      if (!user.role) {
+        console.warn('User role is missing in the login response, defaulting to "user"');
+        user.role = 'user'; // Default role
       }
       
       // Try to get refresh token from cookies if available
       refreshToken = response?.headers?.['set-cookie']?.[0]?.split(';')[0]?.split('=')[1] || null;
       
       if (!user || !accessToken) {
-        console.error('Invalid login response format:', response);
-        throw new Error('Invalid login response format');
+        console.error('Invalid login response format - missing user or token:', response);
+        throw new Error('Invalid login response format: Missing user or token');
       }
       
       // Store tokens and update auth state
       storeTokens(accessToken, refreshToken);
+      
+      // Ensure we have the latest user data including role
+      try {
+        // Fetch fresh user data to ensure we have all fields including role
+        const freshUser = await authApi.getMe();
+        if (freshUser) {
+          user = transformUser(freshUser);
+        }
+      } catch (error) {
+        console.warn('Failed to fetch fresh user data after login, using login response data:', error);
+      }
+      
+      // Final check for role
+      if (!user.role) {
+        console.warn('User role still missing after refresh, defaulting to "user"');
+        user.role = 'user';
+      }
+      
       dispatch({
         type: 'AUTH_SUCCESS',
         payload: { 
-          user: transformUser(user), 
+          user: user, 
           token: accessToken, 
           refreshToken,
           permissions: user.permissions || []
         }
       });
       
-      // Redirect to the intended URL or dashboard
+      // Get the appropriate dashboard route based on user role
       const redirectPath = redirectTo || getDashboardRoute(user.role);
-      console.log('Login successful, redirecting to:', redirectPath);
-      return { success: true, user, redirectTo: redirectPath };
+      console.log('Login successful, user role:', user.role, 'redirecting to:', redirectPath);
+      
+      return { 
+        success: true, 
+        user, 
+        redirectTo: redirectPath 
+      };
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Login failed';
       console.error('Login error:', error);

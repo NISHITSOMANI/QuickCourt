@@ -86,6 +86,16 @@ const AdminDashboard = () => {
     activeReports: 5
   }
 
+  // Add default values for stats to prevent undefined errors
+  const safeStats = {
+    totalUsers: stats?.totalUsers || 0,
+    totalVenues: stats?.totalVenues || 0,
+    totalBookings: stats?.totalBookings || 0,
+    totalRevenue: stats?.totalRevenue || 0,
+    pendingApprovals: stats?.pendingApprovals || 0,
+    activeReports: stats?.activeReports || 0
+  };
+
   const recentActivities = [
     { id: 1, type: 'venue_approval', message: 'New venue "Sports Complex ABC" pending approval', time: '2 hours ago' },
     { id: 2, type: 'user_report', message: 'User reported inappropriate behavior', time: '4 hours ago' },
@@ -97,7 +107,7 @@ const AdminDashboard = () => {
   const statCards = [
     {
       title: 'Total Users',
-      value: stats.totalUsers.toLocaleString(),
+      value: safeStats.totalUsers.toLocaleString(),
       change: '+15.3%',
       changeType: 'positive',
       icon: Users,
@@ -105,7 +115,7 @@ const AdminDashboard = () => {
     },
     {
       title: 'Total Venues',
-      value: stats.totalVenues,
+      value: safeStats.totalVenues.toLocaleString(),
       change: '+8.1%',
       changeType: 'positive',
       icon: Building2,
@@ -113,7 +123,7 @@ const AdminDashboard = () => {
     },
     {
       title: 'Total Bookings',
-      value: stats.totalBookings.toLocaleString(),
+      value: safeStats.totalBookings.toLocaleString(),
       change: '+22.5%',
       changeType: 'positive',
       icon: Calendar,
@@ -121,7 +131,7 @@ const AdminDashboard = () => {
     },
     {
       title: 'Platform Revenue',
-      value: `$${stats.totalRevenue.toLocaleString()}`,
+      value: `$${safeStats.totalRevenue.toLocaleString()}`,
       change: '+18.7%',
       changeType: 'positive',
       icon: DollarSign,
