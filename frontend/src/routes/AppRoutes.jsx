@@ -1,206 +1,194 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import ProtectedRoute from './ProtectedRoute'
-import Navbar from '../components/layout/Navbar'
-import Footer from '../components/layout/Footer'
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import ProtectedRoute from './ProtectedRoute';
+
+// Layouts
+import BaseLayout from '../layouts/BaseLayout';
+import AdminLayout from '../layouts/AdminLayout';
+import OwnerLayout from '../layouts/OwnerLayout';
+import UserLayout from '../layouts/UserLayout';
 
 // Public Pages
-import LandingPage from '../pages/LandingPage'
-import HomePage from '../pages/HomePage'
-import VenuesPage from '../pages/VenuesPage'
-import VenueDetailsPage from '../pages/VenueDetailsPage'
-import LoginPage from '../pages/auth/LoginPage'
-import RegisterPage from '../pages/auth/RegisterPage'
-import EmailVerificationPage from '../pages/EmailVerificationPage'
+import LandingPage from '../pages/LandingPage';
+import HomePage from '../pages/HomePage';
+import VenuesPage from '../pages/VenuesPage';
+import VenueDetailsPage from '../pages/VenueDetailsPage';
+import LoginPage from '../pages/auth/LoginPage';
+import RegisterPage from '../pages/auth/RegisterPage';
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
+import EmailVerificationPage from '../pages/EmailVerificationPage';
+import UnauthorizedPage from '../pages/UnauthorizedPage';
+import NotFoundPage from '../pages/NotFoundPage';
 
 // User Pages
-import BookingPage from '../pages/BookingPage'
-import PaymentPage from '../pages/PaymentPage'
-import MyBookingsPage from '../pages/user/MyBookingsPage'
-import ProfilePage from '../pages/user/ProfilePage'
-
-// Dashboard Pages
-import AdminDashboard from '../pages/dashboard/AdminDashboard'
-import OwnerDashboard from '../pages/dashboard/OwnerDashboard'
-
-// Owner Pages
-import OwnerCourtsPage from '../pages/owner/OwnerCourtsPage'
-import OwnerBookingsPage from '../pages/owner/OwnerBookingsPage'
-import OwnerProfilePage from '../pages/owner/OwnerProfilePage'
+import BookingPage from '../pages/BookingPage';
+import PaymentPage from '../pages/PaymentPage';
+import MyBookingsPage from '../pages/user/MyBookingsPage';
+import UserProfilePage from '../pages/user/ProfilePage';
 
 // Admin Pages
-import AdminFacilitiesPage from '../pages/admin/AdminFacilitiesPage'
-import AdminUsersPage from '../pages/admin/AdminUsersPage'
-import AdminAnalyticsPage from '../pages/admin/AdminAnalyticsPage'
-import AdminProfilePage from '../pages/admin/AdminProfilePage'
+import AdminDashboard from '../pages/dashboard/AdminDashboard';
+import AdminUsersPage from '../pages/admin/AdminUsersPage';
+import AdminFacilitiesPage from '../pages/admin/AdminFacilitiesPage';
+import AdminAnalyticsPage from '../pages/admin/AdminAnalyticsPage';
+import AdminSettingsPage from '../pages/admin/AdminSettingsPage';
+
+// Owner Pages
+import OwnerDashboard from '../pages/owner/OwnerDashboard';
+import OwnerCourtsPage from '../pages/owner/OwnerCourtsPage';
+import OwnerBookingsPage from '../pages/owner/OwnerBookingsPage';
+import OwnerEarningsPage from '../pages/owner/OwnerEarningsPage';
+import OwnerSettingsPage from '../pages/owner/OwnerSettingsPage';
+
+// Public route wrapper to handle authentication state
+const PublicRoute = ({ children, restricted = false }) => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // If route is restricted and user is authenticated, redirect to dashboard
+  if (restricted && isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
+// Role-based route wrapper
+const RoleBasedRoute = ({ allowedRoles, children }) => {
+  const { user, isAuthenticated } = useAuth();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (!allowedRoles.includes(user?.role)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return children;
+};
 
 const AppRoutes = () => {
-  const { isAuthenticated, user, loading } = useAuth()
+  const { isAuthenticated, user, loading } = useAuth();
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
-    )
-  }
-
-  // Dashboard redirect logic
-  const getDashboardRedirect = () => {
-    if (!isAuthenticated || !user?.role) return '/'
-    return `/dashboard/${user.role}`
+    );
   }
 
   return (
     <Routes>
-      {/* Landing Page - No Navbar */}
-      <Route
-        path="/"
-        element={
-          isAuthenticated ? <Navigate to="/home" replace /> : <LandingPage />
-        }
-      />
+      {/* Public Routes */}
+      <Route element={
+        <PublicRoute restricted={true}>
+          <LandingPage />
+        </PublicRoute>
+      } path="/" />
+      
+      <Route element={
+        <PublicRoute restricted={true}>
+          <LoginPage />
+        </PublicRoute>
+      } path="/login" />
+      
+      <Route element={
+        <PublicRoute restricted={false}>
+          <ForgotPasswordPage />
+        </PublicRoute>
+      } path="/forgot-password" />
+      
+      <Route element={
+        <PublicRoute restricted={true}>
+          <RegisterPage />
+        </PublicRoute>
+      } path="/register" />
+      
+      <Route element={
+        <PublicRoute>
+          <EmailVerificationPage />
+        </PublicRoute>
+      } path="/verify-email" />
+      
+      <Route element={
+        <PublicRoute>
+          <BaseLayout>
+            <Outlet />
+          </BaseLayout>
+        </PublicRoute>
+      }>
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/venues" element={<VenuesPage />} />
+        <Route path="/venues/:id" element={<VenueDetailsPage />} />
+      </Route>
 
-      {/* Auth Routes - No Navbar */}
-      <Route
-        path="/login"
-        element={
-          isAuthenticated ? <Navigate to="/home" replace /> : <LoginPage />
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          isAuthenticated ? <Navigate to="/home" replace /> : <RegisterPage />
-        }
-      />
-      <Route
-        path="/verify-email"
-        element={<EmailVerificationPage />}
-      />
+      {/* User Routes */}
+      <Route element={
+        <RoleBasedRoute allowedRoles={['user']}>
+          <UserLayout>
+            <Outlet />
+          </UserLayout>
+        </RoleBasedRoute>
+      }>
+        <Route path="/user/booking" element={<BookingPage />} />
+        <Route path="/user/payment" element={<PaymentPage />} />
+        <Route path="/user/my-bookings" element={<MyBookingsPage />} />
+        <Route path="/user/profile" element={<UserProfilePage />} />
+      </Route>
 
-      {/* Main App Routes - With Navbar */}
-      <Route path="/*" element={
-        <>
-          <Navbar />
-          <main className="min-h-screen">
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/home" element={<HomePage />} />
-              <Route path="/venues" element={<VenuesPage />} />
-              <Route path="/venues/:id" element={<VenueDetailsPage />} />
+      {/* Owner Routes */}
+      <Route element={
+        <RoleBasedRoute allowedRoles={['owner']}>
+          <OwnerLayout>
+            <Outlet />
+          </OwnerLayout>
+        </RoleBasedRoute>
+      }>
+        <Route path="/owner" element={<OwnerDashboard />} />
+        <Route path="/owner/courts" element={<OwnerCourtsPage />} />
+        <Route path="/owner/bookings" element={<OwnerBookingsPage />} />
+        <Route path="/owner/earnings" element={<OwnerEarningsPage />} />
+        <Route path="/owner/settings" element={<OwnerSettingsPage />} />
+      </Route>
 
-              {/* User Protected Routes */}
-              <Route
-                path="/booking"
-                element={
-                  <ProtectedRoute allowedRoles={['user']}>
-                    <BookingPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/payment"
-                element={
-                  <ProtectedRoute allowedRoles={['user']}>
-                    <PaymentPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/my-bookings"
-                element={
-                  <ProtectedRoute allowedRoles={['user']}>
-                    <MyBookingsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute allowedRoles={['user', 'owner', 'admin']}>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
+      {/* Admin Routes */}
+      <Route element={
+        <RoleBasedRoute allowedRoles={['admin']}>
+          <AdminLayout>
+            <Outlet />
+          </AdminLayout>
+        </RoleBasedRoute>
+      }>
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
+        <Route path="/admin/facilities" element={<AdminFacilitiesPage />} />
+        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+        <Route path="/admin/settings" element={<AdminSettingsPage />} />
+      </Route>
 
-              {/* Owner Protected Routes */}
-              <Route
-                path="/owner"
-                element={
-                  <ProtectedRoute allowedRoles={['owner']}>
-                    <OwnerDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/owner/courts"
-                element={
-                  <ProtectedRoute allowedRoles={['owner']}>
-                    <OwnerCourtsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/owner/bookings"
-                element={
-                  <ProtectedRoute allowedRoles={['owner']}>
-                    <OwnerBookingsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/owner/profile"
-                element={
-                  <ProtectedRoute allowedRoles={['owner']}>
-                    <OwnerProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Admin Protected Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/facilities"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminFacilitiesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/users"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminUsersPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/profile"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Catch all route */}
-              <Route path="*" element={<Navigate to="/home" replace />} />
-            </Routes>
-          </main>
-          <Footer />
-        </>
+      {/* Error Pages */}
+      <Route path="/unauthorized" element={
+        <BaseLayout>
+          <UnauthorizedPage />
+        </BaseLayout>
+      } />
+      
+      <Route path="*" element={
+        <BaseLayout>
+          <NotFoundPage />
+        </BaseLayout>
       } />
     </Routes>
-  )
-}
+  );
+};
 
 export default AppRoutes

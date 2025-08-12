@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
+const OTP_EXPIRATION_MINUTES = 10; // OTP expires in 10 minutes
+const MAX_OTP_ATTEMPTS = 3; // Maximum number of OTP verification attempts
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -59,6 +62,13 @@ const userSchema = new mongoose.Schema({
     default: false,
   },
   emailVerificationToken: String,
+  // OTP fields for password reset
+  passwordResetOtp: String,
+  passwordResetOtpExpires: Date,
+  passwordResetOtpAttempts: {
+    type: Number,
+    default: 0,
+  },
   passwordResetToken: String,
   passwordResetExpires: Date,
   lastLogin: Date,
@@ -133,20 +143,88 @@ userSchema.methods.resetLoginAttempts = function() {
   });
 };
 
-// Method to generate password reset token
-userSchema.methods.generatePasswordResetToken = function() {
-  // Generate token
-  const resetToken = crypto.randomBytes(32).toString('hex');
+// Method to generate and store OTP for password reset
+userSchema.methods.generatePasswordResetOtp = function() {
+  // Generate 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  // Hash the OTP before storing
+  this.passwordResetOtp = crypto
+    .createHash('sha256')
+    .update(otp)
+    .digest('hex');
+    
+  // Set OTP expiration (10 minutes from now)
+  this.passwordResetOtpExpires = Date.now() + OTP_EXPIRATION_MINUTES * 60 * 1000;
+  
+  // Reset OTP attempts
+  this.passwordResetOtpAttempts = 0;
+  
+  return otp;
+};
 
-  // Hash token and set to passwordResetToken field
+// Method to verify OTP
+userSchema.methods.verifyPasswordResetOtp = async function(candidateOtp) {
+  // Check if OTP exists and is not expired
+  if (!this.passwordResetOtp || !this.passwordResetOtpExpires) {
+    throw new Error('No OTP requested or OTP expired');
+  }
+  
+  // Check if OTP is expired
+  if (this.passwordResetOtpExpires < Date.now()) {
+    this.passwordResetOtp = undefined;
+    this.passwordResetOtpExpires = undefined;
+    await this.save({ validateBeforeSave: false });
+    throw new Error('OTP has expired');
+  }
+  
+  // Check if max attempts exceeded
+  if (this.passwordResetOtpAttempts >= MAX_OTP_ATTEMPTS) {
+    throw new Error('Maximum OTP attempts exceeded. Please request a new OTP.');
+  }
+  
+  // Hash the candidate OTP and compare with stored hash
+  const hashedCandidateOtp = crypto
+    .createHash('sha256')
+    .update(candidateOtp)
+    .digest('hex');
+  
+  const isMatch = this.passwordResetOtp === hashedCandidateOtp;
+  
+  // Increment OTP attempts if verification fails
+  if (!isMatch) {
+    this.passwordResetOtpAttempts += 1;
+    await this.save({ validateBeforeSave: false });
+    
+    const remainingAttempts = MAX_OTP_ATTEMPTS - this.passwordResetOtpAttempts;
+    throw new Error(`Invalid OTP. ${remainingAttempts} attempts remaining.`);
+  }
+  
+  // If OTP is correct, generate a password reset token
+  const resetToken = crypto.randomBytes(32).toString('hex');
   this.passwordResetToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  
+  // Clear OTP fields after successful verification
+  this.passwordResetOtp = undefined;
+  this.passwordResetOtpExpires = undefined;
+  this.passwordResetOtpAttempts = 0;
+  
+  await this.save({ validateBeforeSave: false });
+  return resetToken;
+};
 
-  // Set expire
-  this.passwordResetExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
-
+// Method to generate password reset token (kept for backward compatibility)
+userSchema.methods.generatePasswordResetToken = function() {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
   return resetToken;
 };
 

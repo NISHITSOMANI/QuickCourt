@@ -1,12 +1,27 @@
 const LRU = require('lru-cache');
 const config = require('../config/env');
 const { logBusiness, logError } = require('../config/logger');
+const ServiceCircuitBreaker = require('../utils/circuitBreaker');
 
 class CacheService {
     constructor() {
         this.cache = null;
         this.isConnected = false;
         this.defaultTTL = 3600000; // 1 hour default TTL in milliseconds
+        
+        // Initialize circuit breakers for critical operations
+        this.circuitBreaker = new ServiceCircuitBreaker(
+            'cache-service',
+            this._executeCacheOperation.bind(this),
+            { 
+                timeout: 1000, // 1s timeout for cache operations
+                errorThresholdPercentage: 50, // Trip circuit if 50% of requests fail
+                resetTimeout: 30000, // 30 seconds before attempting to close the circuit
+            }
+        );
+        
+        // Track if we're in a degraded state
+        this.degradedMode = false;
     }
 
     /**
@@ -43,7 +58,51 @@ class CacheService {
     }
 
     /**
-     * Set a value in cache
+     * Internal method to execute cache operations with circuit breaker
+     */
+    async _executeCacheOperation(operation, ...args) {
+        const [key, value, ttl] = args;
+        
+        if (!this.isAvailable()) {
+            throw new Error('Cache not available');
+        }
+
+        try {
+            switch (operation) {
+                case 'set': {
+                    const ttlMs = ttl < 1000000 ? ttl * 1000 : ttl;
+                    this.cache.set(key, value, { ttl: ttlMs });
+                    logBusiness.debug(`Cache set: ${key} (TTL: ${ttlMs}ms)`);
+                    return true;
+                }
+                case 'get': {
+                    const value = this.cache.get(key);
+                    if (value === undefined) {
+                        logBusiness.debug(`Cache miss: ${key}`);
+                        return null;
+                    }
+                    logBusiness.debug(`Cache hit: ${key}`);
+                    return value;
+                }
+                case 'delete': {
+                    const result = this.cache.delete(key);
+                    logBusiness.debug(`Cache delete: ${key} (deleted: ${result})`);
+                    return result;
+                }
+                case 'exists': {
+                    return this.cache.has(key);
+                }
+                default:
+                    throw new Error(`Unsupported cache operation: ${operation}`);
+            }
+        } catch (error) {
+            logError.error(`Cache ${operation} error for key ${key}:`, error);
+            throw error; // Let the circuit breaker handle the error
+        }
+    }
+
+    /**
+     * Set a value in cache with circuit breaker protection
      */
     async set(key, value, ttl = this.defaultTTL) {
         if (!this.isAvailable()) {
@@ -52,19 +111,23 @@ class CacheService {
         }
 
         try {
-            // Convert TTL from seconds to milliseconds if needed
-            const ttlMs = ttl < 1000000 ? ttl * 1000 : ttl;
-            this.cache.set(key, value, { ttl: ttlMs });
-            logBusiness.debug(`Cache set: ${key} (TTL: ${ttlMs}ms)`);
-            return true;
+            return await this.circuitBreaker.execute('set', key, value, ttl);
         } catch (error) {
-            logError.error(`Cache set error for key ${key}:`, error);
-            return false;
+            if (!this.degradedMode) {
+                logBusiness.warn('Cache operation failed, entering degraded mode', { error: error.message });
+                this.degradedMode = true;
+                // Schedule to exit degraded mode after 5 minutes
+                setTimeout(() => {
+                    this.degradedMode = false;
+                    logBusiness.info('Exiting cache degraded mode');
+                }, 5 * 60 * 1000);
+            }
+            return false; // Graceful degradation - return false instead of throwing
         }
     }
 
     /**
-     * Get a value from cache
+     * Get a value from cache with circuit breaker protection
      */
     async get(key) {
         if (!this.isAvailable()) {
@@ -73,22 +136,15 @@ class CacheService {
         }
 
         try {
-            const value = this.cache.get(key);
-            if (value === undefined) {
-                logBusiness.debug(`Cache miss: ${key}`);
-                return null;
-            }
-
-            logBusiness.debug(`Cache hit: ${key}`);
-            return value;
+            return await this.circuitBreaker.execute('get', key);
         } catch (error) {
             logError.error(`Cache get error for key ${key}:`, error);
-            return null;
+            return null; // Graceful degradation - return null on error
         }
     }
 
     /**
-     * Delete a key from cache
+     * Delete a key from cache with circuit breaker protection
      */
     async del(key) {
         if (!this.isAvailable()) {
@@ -97,17 +153,15 @@ class CacheService {
         }
 
         try {
-            const result = this.cache.delete(key);
-            logBusiness.debug(`Cache delete: ${key} (deleted: ${result})`);
-            return result;
+            return await this.circuitBreaker.execute('delete', key);
         } catch (error) {
             logError.error(`Cache delete error for key ${key}:`, error);
-            return false;
+            return false; // Graceful degradation - return false on error
         }
     }
 
     /**
-     * Check if a key exists in cache
+     * Check if a key exists in cache with circuit breaker protection
      */
     async exists(key) {
         if (!this.isAvailable()) {
@@ -115,11 +169,10 @@ class CacheService {
         }
 
         try {
-            const result = this.cache.has(key);
-            return result;
+            return await this.circuitBreaker.execute('exists', key);
         } catch (error) {
             logError.error(`Cache exists error for key ${key}:`, error);
-            return false;
+            return false; // Graceful degradation - return false on error
         }
     }
 
@@ -208,24 +261,36 @@ class CacheService {
     }
 
     /**
-     * Get cache statistics
+     * Get cache statistics including circuit breaker state
      */
     async getStats() {
         if (!this.isAvailable()) {
-            return null;
+            return {
+                connected: false,
+                degradedMode: this.degradedMode,
+                error: 'Cache not available',
+                timestamp: new Date().toISOString()
+            };
         }
 
         try {
             return {
                 connected: this.isConnected,
+                degradedMode: this.degradedMode,
                 size: this.cache.size,
                 max: this.cache.max,
                 calculatedSize: this.cache.calculatedSize,
+                circuitBreaker: this.circuitBreaker ? this.circuitBreaker.getStats() : 'not_initialized',
                 timestamp: new Date().toISOString()
             };
         } catch (error) {
             logError.error('Cache stats error:', error);
-            return null;
+            return {
+                connected: false,
+                degradedMode: true,
+                error: error.message,
+                timestamp: new Date().toISOString()
+            };
         }
     }
 

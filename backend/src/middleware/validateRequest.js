@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const { AppError } = require('./errorHandler');
+const { schemas: validationSchemas } = require('../utils/validationUtils');
 
 /**
  * Validation middleware factory
@@ -305,33 +306,46 @@ const schemas = {
   date: Joi.object({
     date: Joi.date().iso().required()
   }),
-  // User validation schemas
+  // Auth validation schemas
+  userLogin: Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().required()
+  }),
+
   userRegister: Joi.object({
     name: Joi.string().trim().min(2).max(100).required(),
     email: Joi.string().email().lowercase().required(),
-    password: Joi.string().min(6).max(128).required(),
-    role: Joi.string().valid('user', 'owner').default('user'),
-    phone: Joi.string().pattern(/^\+?[\d\s-()]+$/).optional(),
+    password: Joi.string().min(6).required(),
+    phone: Joi.string().pattern(/^[0-9]{10}$/).required(),
+    role: Joi.string().valid('user', 'owner').default('user')
   }),
 
-  userLogin: Joi.object({
+  // Using forgotPassword schema from validationUtils
+  forgotPassword: validationSchemas.forgotPassword,
+
+  verifyOtp: Joi.object({
     email: Joi.string().email().required(),
-    password: Joi.string().required(),
+    otp: Joi.string().length(6).pattern(/^[0-9]+$/).required()
   }),
 
-  userUpdate: Joi.object({
-    name: Joi.string().trim().min(2).max(100).optional(),
-    phone: Joi.string().pattern(/^\+?[\d\s-()]+$/).optional(),
-    avatar: Joi.string().uri().optional(),
-    preferences: Joi.object({
-      notifications: Joi.object({
-        email: Joi.boolean().optional(),
-        sms: Joi.boolean().optional(),
-        push: Joi.boolean().optional(),
-      }).optional(),
-      sports: Joi.array().items(Joi.string()).optional(),
-      location: Joi.string().trim().optional(),
-    }).optional(),
+  resetPassword: Joi.object({
+    email: Joi.string().email().required(),
+    otp: Joi.string().length(6).pattern(/^[0-9]+$/).required(),
+    newPassword: Joi.string().min(6).required()
+  }),
+
+  // Court management schemas
+  courtBlockSlot: Joi.object({
+    date: Joi.date().iso().required(),
+    startTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required(),
+    endTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required(),
+    reason: Joi.string().trim().max(500).required()
+  }),
+
+  courtUnblockSlot: Joi.object({
+    date: Joi.date().iso().required(),
+    startTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required(),
+    endTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required()
   }),
 
   // Venue validation schemas

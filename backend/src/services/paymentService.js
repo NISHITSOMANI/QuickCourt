@@ -5,7 +5,12 @@ const config = require('../config/env');
 const { AppError } = require('../middleware/errorHandler');
 const { logger, logBusiness } = require('../config/logger');
 const Booking = require('../models/Booking');
-const lockService = require('./lockService');
+const distributedLock = require('../utils/distributedLock');
+
+// Constants
+const LOCK_TIMEOUT = 30000; // 30 seconds lock timeout
+const LOCK_RETRY_DELAY = 100; // 100ms between lock retries
+const MAX_LOCK_RETRIES = 30; // Max retries for acquiring lock (30 * 100ms = 3s max wait)
 
 /**
  * Payment Service with Circuit Breaker and Retry Logic
@@ -83,13 +88,19 @@ class PaymentService {
    * Process payment with circuit breaker and pre-gateway validation
    */
   async processPayment(paymentData) {
-    try {
-      const { bookingId, amount, method, userId } = paymentData;
-
-      // Validate payment data
-      if (!bookingId || !amount || !method || !userId) {
-        throw new AppError('Missing required payment data', 400);
-      }
+    const { bookingId, amount, method, userId } = paymentData;
+    const lockKey = `payment:${bookingId}`;
+    
+    // Validate payment data
+    if (!bookingId || !amount || !method || !userId) {
+      throw new AppError('Missing required payment data', 400);
+    }
+    
+    // Use distributed lock to prevent concurrent payments for the same booking
+    return distributedLock.withLock(
+      lockKey,
+      async () => {
+        // Critical section - only one payment can be processed at a time for this booking
 
       if (amount <= 0) {
         throw new AppError('Invalid payment amount', 400);
@@ -143,51 +154,31 @@ class PaymentService {
           throw new AppError('Booking not found or payment already processed', 400);
         }
 
-        // Process payment through circuit breaker
-        const result = await this.circuitBreaker.fire(paymentData);
-
-        // Log successful payment
-        logBusiness('PAYMENT_PROCESSED', userId, {
-          bookingId,
-          paymentId: result.paymentId,
-          transactionId: result.transactionId,
+        // Process payment using circuit breaker
+        const paymentResult = await this.circuitBreaker.fire({
           amount,
           method,
-          status: result.status,
-          gateway: result.gateway,
-          userId,
-        });
-
-        // Store payment record
-        await this.storePaymentRecord({
           bookingId,
-          paymentId: result.paymentId,
-          transactionId: result.transactionId,
-          amount,
-          method,
-          status: result.status,
-          gateway: result.gateway,
           userId,
+          timestamp: new Date().toISOString(),
         });
 
-        return result;
+        return {
+          success: true,
+          data: paymentResult,
+        };
       } finally {
         // Always release the payment lock
-        await lockService.release(lockKey, lockOwner);
+        await distributedLock.release(lockKey, lockOwner);
       }
-    } catch (error) {
-      logger.error('Payment processing failed:', error);
-
-      // Log failed payment attempt
-      logBusiness('PAYMENT_FAILED', paymentData.userId, {
-        bookingId: paymentData.bookingId,
-        amount: paymentData.amount,
-        method: paymentData.method,
-        error: error.message,
-      });
-
-      throw new AppError(`Payment failed: ${error.message}`, 400);
+    },
+    {
+      ttl: LOCK_TIMEOUT,
+      retryDelay: LOCK_RETRY_DELAY,
+      maxRetries: MAX_LOCK_RETRIES,
+      throwOnFail: true
     }
+    );
   }
 
   /**

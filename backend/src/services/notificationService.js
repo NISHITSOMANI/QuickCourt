@@ -3,10 +3,25 @@ const User = require('../models/User');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const logger = require('../config/logger');
+const ServiceCircuitBreaker = require('../utils/circuitBreaker');
 
 class NotificationService {
+  constructor() {
+    // Initialize circuit breakers for critical operations
+    this.notificationBreaker = new ServiceCircuitBreaker(
+      'notification-service',
+      this._createNotificationInternal.bind(this),
+      { 
+        timeout: 5000, // 5s timeout for notification operations
+        errorThresholdPercentage: 30, // Trip circuit if 30% of requests fail
+        resetTimeout: 30000, // 30 seconds before attempting to close the circuit
+      }
+    );
+  }
   /**
    * Get notifications for a user with pagination
+   * Note: This is a read operation, so we don't use circuit breaker here
+   * to ensure users can always retrieve their notifications
    */
   async getNotifications(userId, options = {}) {
     try {
@@ -32,9 +47,23 @@ class NotificationService {
   }
 
   /**
-   * Create a new notification
+   * Create a new notification with circuit breaker protection
    */
   async createNotification(notificationData) {
+    try {
+      return await this.notificationBreaker.execute(notificationData);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      logger.error('Notification service is temporarily unavailable', { error });
+      // In a real app, you might want to queue failed notifications for later retry
+      return null; // Graceful degradation - return null instead of failing
+    }
+  }
+
+  /**
+   * Internal method to create notification (wrapped by circuit breaker)
+   */
+  async _createNotificationInternal(notificationData) {
     try {
       const { userId, role, title, message, meta } = notificationData;
       
@@ -72,6 +101,8 @@ class NotificationService {
 
   /**
    * Mark notification as read
+   * Note: This is a non-critical operation, so we don't use circuit breaker
+   * to ensure users can always mark notifications as read
    */
   async markAsRead(notificationId, userId) {
     try {
@@ -89,6 +120,8 @@ class NotificationService {
 
   /**
    * Delete notification
+   * Note: This is a non-critical operation, so we don't use circuit breaker
+   * to ensure users can always delete their notifications
    */
   async deleteNotification(notificationId, userId) {
     try {
@@ -105,6 +138,18 @@ class NotificationService {
     } catch (error) {
       throw error;
     }
+  }
+
+  /**
+   * Get service health status
+   */
+  async getHealthStatus() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      circuitBreaker: this.notificationBreaker ? this.notificationBreaker.getStats() : 'not_initialized',
+      degraded: !this.notificationBreaker || this.notificationBreaker.isOpen()
+    };
   }
 }
 

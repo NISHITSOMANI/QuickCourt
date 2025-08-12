@@ -88,6 +88,80 @@ class EmailService {
   }
 
   /**
+   * Send OTP for password reset
+   */
+  async sendPasswordResetOtpEmail(email, name, otp) {
+    const mailOptions = {
+      from: config.email.from,
+      to: email,
+      subject: 'Your QuickCourt Password Reset OTP',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #2563eb; margin-bottom: 10px;">Password Reset Request</h1>
+            <p style="color: #4b5563; margin-bottom: 20px;">Use the following OTP to reset your password. This OTP is valid for 10 minutes.</p>
+          </div>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 6px; text-align: center; margin: 20px 0;">
+            <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1f2937;">${otp}</div>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+            If you didn't request this OTP, you can safely ignore this email. Your account is secure.
+          </p>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #9ca3af; font-size: 12px;">
+            <p>This email was sent to ${email} because you requested a password reset for your QuickCourt account.</p>
+          </div>
+        </div>
+      `,
+    };
+
+    return this.send(mailOptions);
+  }
+
+  /**
+   * Send password reset confirmation email
+   */
+  async sendPasswordResetConfirmationEmail(email, name) {
+    const mailOptions = {
+      from: config.email.from,
+      to: email,
+      subject: 'Your QuickCourt Password Has Been Reset',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #2563eb; margin-bottom: 10px;">Password Successfully Reset</h1>
+            <p style="color: #4b5563; margin-bottom: 20px;">Your QuickCourt account password was successfully changed.</p>
+          </div>
+          
+          <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 20px 0; border-radius: 4px;">
+            <p style="color: #065f46; margin: 0;">
+              If you did not make this change and believe your account may have been compromised, please contact our support team immediately.
+            </p>
+          </div>
+          
+          <div style="margin-top: 30px; padding: 20px; background-color: #f9fafb; border-radius: 8px;">
+            <h3 style="color: #111827; margin-top: 0;">Security Tips:</h3>
+            <ul style="padding-left: 20px; color: #4b5563;">
+              <li>Never share your password with anyone</li>
+              <li>Use a strong, unique password</li>
+              <li>Change your password regularly</li>
+              <li>Be cautious of phishing attempts</li>
+            </ul>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+            This is an automated message, please do not reply directly to this email.
+          </p>
+        </div>
+      `,
+    };
+
+    return this.send(mailOptions);
+  }
+
+  /**
    * Send welcome email
    */
   async sendWelcomeEmail(email, name) {

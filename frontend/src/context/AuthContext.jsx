@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
 import { authApi } from '../api/authApi';
 import toast from 'react-hot-toast';
 import { api } from '../api/config';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AuthContext = createContext();
 
@@ -234,23 +235,44 @@ export const AuthProvider = ({ children }) => {
     }
   }, [state.isRefreshing]);
   
-  // Login user
-  const login = useCallback(async (credentials) => {
-    try {
-      dispatch({ type: 'AUTH_START' });
-      const response = await authApi.login(credentials);
-      // The authApi.login already returns the transformed user and token
-      handleAuthSuccess({
-        user: response.user,
-        token: response.token,
-        refreshToken: response.refreshToken
-      });
-      return response.user;
-    } catch (error) {
-      return handleAuthFail(error);
+  // Get dashboard route based on user role
+  const getDashboardRoute = useCallback((userRole) => {
+    switch (userRole) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'owner':
+        return '/owner/dashboard';
+      case 'user':
+        return '/user/dashboard';
+      default:
+        return '/';
     }
-  }, [handleAuthSuccess, handleAuthFail]);
-  
+  }, []);
+
+  // Login user
+  const login = useCallback(async (credentials, redirectTo = null) => {
+    dispatch({ type: 'AUTH_START' });
+    
+    try {
+      const response = await authApi.login(credentials);
+      const { user, token, refreshToken } = response.data;
+      
+      storeTokens(token, refreshToken);
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: { user, token, refreshToken }
+      });
+      
+      // Redirect to the intended URL or dashboard
+      const redirectPath = redirectTo || getDashboardRoute(user.role);
+      return { success: true, user, redirectTo: redirectPath };
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Login failed';
+      dispatch({ type: 'AUTH_FAIL', payload: errorMessage });
+      return { success: false, error: errorMessage };
+    }
+  }, [getDashboardRoute]);
+
   // Logout user
   const logout = useCallback(() => {
     // Clear tokens from storage
@@ -265,7 +287,7 @@ export const AuthProvider = ({ children }) => {
     // Redirect to login page
     window.location.href = '/login';
   }, []);
-  
+
   // Register new user
   const register = useCallback(async (userData) => {
     try {
@@ -277,7 +299,7 @@ export const AuthProvider = ({ children }) => {
       return handleAuthFail(error);
     }
   }, [handleAuthSuccess, handleAuthFail]);
-  
+
   // Update user profile
   const updateProfile = useCallback(async (userData) => {
     try {
@@ -304,24 +326,19 @@ export const AuthProvider = ({ children }) => {
   const hasRole = useCallback((role) => {
     return state.user?.role === role;
   }, [state.user]);
-  
+
   const hasAnyRole = useCallback((roles) => {
     return roles.includes(state.user?.role);
   }, [state.user]);
-  
+
   const hasPermission = useCallback((permission) => {
     return state.permissions.includes(permission);
   }, [state.permissions]);
-  
-  const getDashboardRoute = useCallback(() => {
-    if (!state.user?.role) return '/';
-    return `/dashboard/${state.user.role}`;
-  }, [state.user]);
-  
+
   const canAccessDashboard = useCallback(() => {
     return state.isAuthenticated && state.user?.role;
   }, [state.isAuthenticated, state.user]);
-  
+
   // Update user profile data with development mode support
   const updateUser = useCallback((userData) => {
     // For development: if it's a complete user object, set as dev user
@@ -331,27 +348,43 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'UPDATE_USER', payload: userData });
     }
   }, []);
-  
+
   // Clear any authentication errors
   const clearError = useCallback(() => {
     dispatch({ type: 'CLEAR_ERROR' });
   }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     ...state,
     login,
-    register,
     logout,
-    updateUser,
-    clearError,
+    register,
+    refreshAccessToken,
+    updateProfile,
     hasRole,
     hasAnyRole,
     hasPermission,
-    getDashboardRoute,
-    canAccessDashboard,
-  }
+    clearError,
+    getDashboardRoute: () => getDashboardRoute(state.user?.role)
+  }), [
+    state,
+    login,
+    logout,
+    register,
+    refreshAccessToken,
+    updateProfile,
+    hasRole,
+    hasAnyRole,
+    hasPermission,
+    clearError,
+    getDashboardRoute
+  ]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => {

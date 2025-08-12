@@ -178,9 +178,9 @@ export const authApi = {
   },
 
   /**
-   * Request a password reset email
+   * Request a password reset OTP
    * @param {string} email - User's email address
-   * @returns {Promise<{message: string}>}
+   * @returns {Promise<{message: string, email: string, otpExpiry: string}>}
    */
   forgotPassword: async (email) => {
     if (!email) {
@@ -196,21 +196,28 @@ export const authApi = {
         retry: false
       });
       
-      toast.success('Password reset link sent to your email');
-      return response.data;
+      toast.success('OTP sent to your email');
+      return {
+        message: response.data.message,
+        email: response.data.email,
+        otpExpiry: response.data.otpExpiry
+      };
     } catch (error) {
       console.error('Forgot password error:', error);
       
       // Don't reveal if the email exists or not for security
       if (error.response?.status === 404) {
-        toast.success('If an account exists with this email, a password reset link has been sent');
-        return { message: 'If an account exists with this email, a password reset link has been sent' };
+        toast.success('If an account exists with this email, an OTP has been sent');
+        return { 
+          message: 'If an account exists with this email, an OTP has been sent',
+          email
+        };
       }
       
       if (error.response?.status === 429) {
         toast.error('Too many requests. Please try again later.');
       } else {
-        toast.error('Failed to send password reset email. Please try again.');
+        toast.error('Failed to send OTP. Please try again.');
       }
       
       throw error;
@@ -218,18 +225,77 @@ export const authApi = {
   },
 
   /**
-   * Reset password using a reset token
-   * @param {string} token - Password reset token
-   * @param {string} newPassword - New password
-   * @returns {Promise<{message: string}>}
+   * Verify OTP for password reset
+   * @param {string} email - User's email address
+   * @param {string} otp - 6-digit OTP
+   * @returns {Promise<{message: string, resetToken: string, resetTokenExpiry: string}>}
    */
-  resetPassword: async (token, newPassword) => {
-    if (!token || !newPassword) {
-      throw new Error('Token and new password are required');
+  verifyOtp: async (email, otp) => {
+    if (!email || !otp) {
+      throw new Error('Email and OTP are required');
     }
 
     try {
-      const response = await api.post('/auth/reset-password', { token, newPassword }, {
+      const response = await api.post('/auth/verify-otp', { email, otp }, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        // Don't retry on failure
+        retry: false
+      });
+      
+      toast.success('OTP verified successfully');
+      return {
+        message: response.data.message,
+        resetToken: response.data.resetToken,
+        resetTokenExpiry: response.data.resetTokenExpiry
+      };
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      
+      if (error.response) {
+        if (error.response.status === 400) {
+          toast.error('Invalid OTP. Please check and try again.');
+        } else if (error.response.status === 401) {
+          toast.error('OTP has expired. Please request a new one.');
+        } else if (error.response.status === 404) {
+          toast.error('No password reset request found for this email.');
+        } else if (error.response.status === 429) {
+          toast.error('Too many attempts. Please try again later.');
+        } else {
+          toast.error('Failed to verify OTP. Please try again.');
+        }
+      } else {
+        toast.error('Network error. Please check your connection.');
+      }
+      
+      throw error;
+    }
+  },
+
+  /**
+   * Reset password using a reset token from OTP verification
+   * @param {string} token - Password reset token from OTP verification
+   * @param {string} password - New password
+   * @param {string} confirmPassword - Confirm new password
+   * @returns {Promise<{message: string, email: string}>}
+   */
+  resetPassword: async (token, password, confirmPassword) => {
+    if (!token || !password || !confirmPassword) {
+      throw new Error('Token, password and confirm password are required');
+    }
+
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      throw new Error('Passwords do not match');
+    }
+
+    try {
+      const response = await api.post('/auth/reset-password', { 
+        token, 
+        password,
+        confirmPassword
+      }, {
         headers: {
           'Content-Type': 'application/json'
         },
@@ -238,7 +304,10 @@ export const authApi = {
       });
       
       toast.success('Password reset successful. You can now log in with your new password.');
-      return response.data;
+      return {
+        message: response.data.message,
+        email: response.data.email
+      };
     } catch (error) {
       console.error('Reset password error:', error);
       
@@ -246,9 +315,10 @@ export const authApi = {
         if (error.response.status === 400) {
           toast.error('Invalid or expired reset token');
         } else if (error.response.status === 401) {
-          toast.error('Password reset link has expired. Please request a new one.');
+          toast.error('Password reset token has expired. Please start the process again.');
         } else if (error.response.status === 422) {
-          toast.error('Password does not meet requirements');
+          const errorMsg = error.response.data?.errors?.[0]?.msg || 'Password does not meet requirements';
+          toast.error(errorMsg);
         } else {
           toast.error('Failed to reset password. Please try again.');
         }

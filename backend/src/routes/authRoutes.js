@@ -22,13 +22,22 @@ router.post('/refresh',
   authController.refreshToken
 );
 
+// Password reset flow with OTP
 router.post('/forgot-password',
   authRateLimit,
+  validateBody('forgotPassword'),
   authController.forgotPassword
+);
+
+router.post('/verify-otp',
+  authRateLimit,
+  validateBody('verifyOtp'),
+  authController.verifyOtp
 );
 
 router.post('/reset-password',
   authRateLimit,
+  validateBody('resetPassword'),
   authController.resetPassword
 );
 

@@ -112,7 +112,7 @@ const getMe = catchAsync(async (req, res) => {
 });
 
 /**
- * Forgot password
+ * Forgot password - Step 1: Request OTP
  */
 const forgotPassword = catchAsync(async (req, res) => {
   const { email } = req.body;
@@ -122,11 +122,37 @@ const forgotPassword = catchAsync(async (req, res) => {
   res.status(200).json({
     success: true,
     message: result.message,
+    data: {
+      email: result.email,
+      otpExpiry: result.otpExpiry
+    }
   });
 });
 
 /**
- * Reset password
+ * Verify OTP - Step 2: Verify OTP and get reset token
+ */
+const verifyOtp = catchAsync(async (req, res) => {
+  const { email, otp } = req.body;
+  
+  if (!email || !otp) {
+    throw new AppError('Email and OTP are required', 400);
+  }
+
+  const result = await authService.verifyPasswordResetOtp(email, otp);
+
+  res.status(200).json({
+    success: true,
+    message: result.message,
+    data: {
+      resetToken: result.resetToken,
+      resetTokenExpiry: result.resetTokenExpiry
+    }
+  });
+});
+
+/**
+ * Reset password - Step 3: Set new password with valid reset token
  */
 const resetPassword = catchAsync(async (req, res) => {
   const { token, password, confirmPassword } = req.body;
@@ -136,12 +162,15 @@ const resetPassword = catchAsync(async (req, res) => {
     throw new AppError('Passwords do not match.', 400);
   }
 
-  // 2. The token from the request body is the raw token sent to the user's email
+  // 2. The token from the request body is the raw token from verifyOtp step
   const result = await authService.resetPassword(token, password);
 
   res.status(200).json({
     success: true,
     message: result.message,
+    data: {
+      email: result.email
+    }
   });
 });
 
@@ -256,6 +285,7 @@ module.exports = {
   logout,
   getMe,
   forgotPassword,
+  verifyOtp,
   resetPassword,
   updateProfile,
   changePassword,

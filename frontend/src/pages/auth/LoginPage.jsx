@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, UserCheck } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
@@ -26,18 +26,34 @@ const LoginPage = () => {
   }, [clearError])
 
   const onSubmit = async (data) => {
-    const result = await login(data)
-    if (result.success) {
-      if (bookingAction && venue) {
-        // If user came from booking, redirect to venue details page
-        // The venue details page will then show the payment modal
-        navigate(from, {
-          replace: true,
-          state: { showPaymentModal: true, venue: venue }
-        })
-      } else {
-        navigate(from, { replace: true })
+    try {
+      const result = await login(data, from);
+      if (result.success) {
+        // Show success message
+        toast.success('Login successful!');
+        
+        // Handle redirect based on where the user came from
+        if (bookingAction && venue) {
+          // If user came from booking, redirect to venue details page
+          navigate(from, {
+            replace: true,
+            state: { 
+              showPaymentModal: true, 
+              venue: venue,
+              from: location.state?.from || null
+            }
+          });
+        } else if (result.redirectTo) {
+          // Redirect to the intended URL or dashboard
+          navigate(result.redirectTo, { replace: true });
+        } else {
+          // Fallback to home
+          navigate('/', { replace: true });
+        }
       }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error(error.message || 'Login failed. Please try again.');
     }
   }
 
@@ -187,13 +203,18 @@ const LoginPage = () => {
             </div>
 
             <div className="text-sm">
-              <Link
-                to="/forgot-password"
-                className="font-medium text-primary-600 hover:text-primary-500"
-              >
-                Forgot your password?
+              <Link to="/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
+                Forgot password?
               </Link>
             </div>
+          </div>
+
+          {/* Sign up link */}
+          <div className="text-sm text-center mt-2">
+            <span className="text-gray-600">Don't have an account? </span>
+            <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
+              Sign up
+            </Link>
           </div>
 
           {/* Submit Button */}

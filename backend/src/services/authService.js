@@ -5,8 +5,28 @@ const config = require('../config/env');
 const { AppError } = require('../middleware/errorHandler');
 const { logBusiness, logSecurity } = require('../config/logger');
 const emailService = require('./emailService');
+const ServiceCircuitBreaker = require('../utils/circuitBreaker');
 
 class AuthService {
+  constructor() {
+    // Initialize circuit breakers for critical operations
+    this.loginBreaker = new ServiceCircuitBreaker(
+      'auth-login',
+      this._loginInternal.bind(this),
+      { timeout: 5000 } // 5s timeout for login
+    );
+
+    this.registerBreaker = new ServiceCircuitBreaker(
+      'auth-register',
+      this._registerInternal.bind(this),
+      { timeout: 8000 } // 8s timeout for registration
+    );
+
+    this.refreshTokenBreaker = new ServiceCircuitBreaker(
+      'auth-refresh-token',
+      this._refreshTokenInternal.bind(this)
+    );
+  }
   /**
    * Generate JWT tokens
    */
@@ -23,9 +43,16 @@ class AuthService {
   }
 
   /**
-   * Register a new user
+   * Register a new user with circuit breaker protection
    */
   async register(userData, req) {
+    return this.registerBreaker.execute(userData, req);
+  }
+
+  /**
+   * Internal registration logic (wrapped by circuit breaker)
+   */
+  async _registerInternal(userData, req) {
     try {
       // Check if user already exists
       const existingUser = await User.findOne({ email: userData.email });
@@ -73,9 +100,16 @@ class AuthService {
   }
 
   /**
-   * Login user
+   * Login user with circuit breaker protection
    */
   async login(email, password, req) {
+    return this.loginBreaker.execute(email, password, req);
+  }
+
+  /**
+   * Internal login logic (wrapped by circuit breaker)
+   */
+  async _loginInternal(email, password, req) {
     try {
       // Find user by email
       const user = await User.findOne({ email }).select("+password");
@@ -145,9 +179,16 @@ class AuthService {
 
 
   /**
-   * Refresh access token
+   * Refresh access token with circuit breaker protection
    */
   async refreshToken(refreshToken) {
+    return this.refreshTokenBreaker.execute(refreshToken);
+  }
+
+  /**
+   * Internal refresh token logic (wrapped by circuit breaker)
+   */
+  async _refreshTokenInternal(refreshToken) {
     try {
       // Verify refresh token
       const decoded = jwt.verify(refreshToken, config.jwt.refreshSecret);
@@ -212,7 +253,7 @@ class AuthService {
   }
 
   /**
-   * Forgot password
+   * Forgot password - Step 1: Request OTP
    */
   async forgotPassword(email, req) {
     try {
@@ -221,40 +262,66 @@ class AuthService {
       // 1. Check if user exists and is not an admin
       if (!user || user.role === 'admin') {
         // Security: Don't reveal that the user does not exist or is an admin.
-        // Log the attempt for security monitoring.
         logSecurity('PASSWORD_RESET_ATTEMPT_NONEXISTENT_OR_ADMIN', req, { email });
-        return { message: 'If an account with that email exists, a password reset link has been sent.' };
+        return { message: 'If an account with that email exists, an OTP has been sent.' };
       }
 
-      // 2. Generate reset token using the model method
-      const resetToken = user.generatePasswordResetToken();
-      await user.save({ validateBeforeSave: false }); // Skip validation to save token fields
+      // 2. Generate and save OTP
+      const otp = user.generatePasswordResetOtp();
+      await user.save({ validateBeforeSave: false });
 
-      // 3. Create reset URL (pointing to a frontend route)
-      // The frontend will handle the /reset-password/:token route
-      const resetUrl = `${config.frontend.url}/reset-password/${resetToken}`;
-
-      // 4. Send email
+      // 3. Send OTP via email
       try {
-        await emailService.sendPasswordResetEmail(user.email, user.name, resetUrl);
-        logBusiness('PASSWORD_RESET_REQUESTED', user._id, { email: user.email });
+        await emailService.sendPasswordResetOtpEmail(user.email, user.name, otp);
+        logBusiness('PASSWORD_RESET_OTP_SENT', user._id, { email: user.email });
       } catch (emailError) {
-        // If email fails, clear the reset token fields to allow a new request
-        user.passwordResetToken = undefined;
-        user.passwordResetExpires = undefined;
+        // If email fails, clear the OTP fields to allow a new request
+        user.passwordResetOtp = undefined;
+        user.passwordResetOtpExpires = undefined;
         await user.save({ validateBeforeSave: false });
 
-        throw new AppError('Failed to send password reset email. Please try again later.', 500);
+        throw new AppError('Failed to send OTP. Please try again later.', 500);
       }
 
-      return { message: 'Password reset link sent to your email.' };
+      return { 
+        message: 'OTP sent to your registered email.',
+        email: user.email, // Return masked email for display
+        otpExpiry: 10 // OTP expires in 10 minutes
+      };
     } catch (error) {
       throw error;
     }
   }
 
   /**
-   * Reset password
+   * Verify OTP for password reset - Step 2
+   */
+  async verifyPasswordResetOtp(email, otp) {
+    try {
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        throw new AppError('Invalid request', 400);
+      }
+
+      // This will verify the OTP and generate a reset token if valid
+      const resetToken = await user.verifyPasswordResetOtp(otp);
+
+      return {
+        message: 'OTP verified successfully',
+        resetToken,
+        resetTokenExpiry: 10 // Token expires in 10 minutes
+      };
+    } catch (error) {
+      if (error.message.includes('OTP') || error.message.includes('expired') || error.message.includes('attempts')) {
+        throw new AppError(error.message, 400);
+      }
+      throw new AppError('Failed to verify OTP. Please try again.', 400);
+    }
+  }
+
+  /**
+   * Reset password - Step 3: Set new password with valid reset token
    */
   async resetPassword(token, newPassword) {
     try {
@@ -274,10 +341,13 @@ class AuthService {
         throw new AppError('Password reset token is invalid or has expired.', 400);
       }
 
-      // 3. Set the new password
+      // 3. Set the new password and clear reset token
       user.password = newPassword;
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
+      user.passwordResetOtp = undefined;
+      user.passwordResetOtpExpires = undefined;
+      user.passwordResetOtpAttempts = 0;
 
       // The 'pre-save' middleware on the User model will automatically hash the password
       await user.save();
@@ -286,11 +356,25 @@ class AuthService {
       const RefreshToken = require('../models/RefreshToken');
       await RefreshToken.deleteMany({ userId: user._id });
 
+      // 5. Send confirmation email
+      try {
+        await emailService.sendPasswordResetConfirmationEmail(user.email, user.name);
+      } catch (emailError) {
+        // Log but don't fail the password reset if email fails
+        console.error('Failed to send password reset confirmation email:', emailError);
+      }
+
       logBusiness('PASSWORD_RESET_COMPLETED', user._id, { email: user.email });
 
-      return { message: 'Your password has been reset successfully. Please log in with your new password.' };
+      return { 
+        message: 'Your password has been reset successfully. Please log in with your new password.',
+        email: user.email
+      };
     } catch (error) {
-      throw error;
+      if (error.message.includes('token') || error.message.includes('expired')) {
+        throw new AppError(error.message, 400);
+      }
+      throw new AppError('Failed to reset password. Please try again.', 400);
     }
   }
 

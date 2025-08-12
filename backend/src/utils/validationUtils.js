@@ -11,6 +11,27 @@ const phone = Joi.string().regex(/^[6-9]\d{9}$/).message('Invalid phone number f
 const password = Joi.string().min(8).max(128).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
   .message('Password must contain at least 8 characters with uppercase, lowercase, number and special character');
 
+// Auth schemas
+const forgotPassword = Joi.object({
+  email: email.required(),
+});
+
+const verifyOtp = Joi.object({
+  email: email.required(),
+  otp: Joi.string().length(6).pattern(/^[0-9]+$/).required()
+    .messages({
+      'string.pattern.base': 'OTP must be a 6-digit number',
+      'string.length': 'OTP must be exactly 6 digits',
+    }),
+});
+
+const resetPassword = Joi.object({
+  token: Joi.string().required(),
+  password: password.required(),
+  confirmPassword: Joi.string().valid(Joi.ref('password')).required()
+    .messages({ 'any.only': 'Passwords do not match' }),
+}).with('password', 'confirmPassword');
+
 // User schemas
 const userRegister = Joi.object({
   name: Joi.string().min(2).max(100).required(),
@@ -230,6 +251,10 @@ module.exports = {
   schemas: {
     objectId,
     email,
+    // Auth schemas
+    forgotPassword,
+    verifyOtp,
+    resetPassword,
     phone,
     password,
     userRegister,
