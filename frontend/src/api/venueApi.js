@@ -1,6 +1,6 @@
 import api from './config';
 import { toast } from 'react-hot-toast';
-import { transformVenue, transformVenues, transformReviews } from '../utils/apiTransformers';
+import { transformVenue, transformVenues, transformReview, transformReviews } from '../utils/apiTransformers';
 
 /**
  * Venue API service for interacting with venue-related endpoints
@@ -431,8 +431,22 @@ const venueApi = {
   }
 };
 
-// Named exports for direct usage in components
-export const getVenues = venueApi.getVenues.bind(venueApi);
-export const getVenueCourts = venueApi.getVenueCourts.bind(venueApi);
+// Export the API methods as named exports
+export const {
+  getVenues,
+  getVenueById,
+  getVenueCourts,
+  getCourtAvailability,
+  getVenueReviews,
+  submitVenueReview,
+  createVenue,
+  updateVenue,
+  deleteVenue,
+  uploadVenuePhotos,
+  deleteVenuePhoto,
+  createCourt,
+  deleteCourt,
+  updateVenueStatus
+} = venueApi;
 
-export { venueApi };
+export default venueApi;
