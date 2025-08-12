@@ -74,8 +74,17 @@ const PublicRoute = ({ children, restricted = false }) => {
 
 // Role-based route wrapper
 const RoleBasedRoute = ({ allowedRoles, children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const location = useLocation();
+  
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
@@ -149,13 +158,14 @@ const AppRoutes = () => {
 
       {/* User Routes */}
       <Route path="/user" element={
+      <Route path="/user" element={
         <RoleBasedRoute allowedRoles={['user']}>
           <UserLayout>
             <Outlet />
           </UserLayout>
         </RoleBasedRoute>
       }>
-        <Route index element={<MyBookingsPage />} />
+        <Route index element={<Navigate to="/user/my-bookings" replace />} />
         <Route path="booking" element={<BookingPage />} />
         <Route path="payment" element={<PaymentPage />} />
         <Route path="my-bookings" element={<MyBookingsPage />} />
@@ -165,6 +175,7 @@ const AppRoutes = () => {
       </Route>
 
       {/* Owner Routes */}
+      <Route path="/owner" element={
       <Route path="/owner" element={
         <RoleBasedRoute allowedRoles={['owner']}>
           <OwnerLayout>
@@ -181,6 +192,7 @@ const AppRoutes = () => {
       </Route>
 
       {/* Admin Routes */}
+      <Route path="/admin" element={
       <Route path="/admin" element={
         <RoleBasedRoute allowedRoles={['admin']}>
           <AdminLayout>

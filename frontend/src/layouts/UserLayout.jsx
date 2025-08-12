@@ -28,8 +28,8 @@ const UserLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <UserSidebar />
-      <div className="ml-64">
-        <main className="p-6">
+      <div className="ml-0 md:ml-64"> {/* Responsive sidebar */}
+        <main className="p-4 md:p-6">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
