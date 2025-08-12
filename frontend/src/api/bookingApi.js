@@ -25,7 +25,7 @@ const bookingApi = {
     const cacheKey = `my-bookings-${JSON.stringify(defaultParams)}`;
     
     try {
-      const response = await api.get('/bookings', { 
+      const response = await api.get('/bookings/my', { 
         params: defaultParams,
         cacheKey: useCache ? cacheKey : undefined,
         cacheOptions: {

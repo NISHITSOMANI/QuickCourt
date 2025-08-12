@@ -265,7 +265,7 @@ export const AuthProvider = ({ children }) => {
       case 'owner':
         return '/owner';
       case 'user':
-        return '/user/my-bookings';
+        return '/user';
       default:
         return '/';
     }

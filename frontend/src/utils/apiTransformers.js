@@ -88,6 +88,25 @@ export const transformBookings = (bookings = []) => {
 };
 
 /**
+ * Transform booking list response with pagination
+ * @param {Object} response - API response with bookings and pagination
+ * @returns {Object} Transformed bookings with pagination info
+ */
+export const transformBookingList = (response) => {
+  if (!response) return { bookings: [], pagination: {} };
+  
+  return {
+    bookings: transformBookings(response.bookings || response.data || []),
+    pagination: {
+      total: response.total || 0,
+      page: response.page || 1,
+      limit: response.limit || 10,
+      totalPages: response.totalPages || Math.ceil((response.total || 0) / (response.limit || 10))
+    }
+  };
+};
+
+/**
  * Transform a user object from the API to the frontend format
  * @param {Object} user - Raw user data from API
  * @returns {Object} Transformed user object
