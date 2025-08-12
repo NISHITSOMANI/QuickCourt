@@ -375,7 +375,7 @@ export const authApi = {
     }
 
     try {
-      const response = await api.patch('/auth/me', userData, {
+      const response = await api.put('/auth/profile', userData, {
         headers: {
           'Content-Type': 'application/json'
         },
@@ -471,7 +471,7 @@ export const authApi = {
     }
 
     try {
-      const response = await api.post('/auth/verify-email', { token }, {
+      const response = await api.get(`/auth/verify-email?token=${token}`, {
         headers: {
           'Content-Type': 'application/json'
         },
@@ -553,7 +553,7 @@ export const authApi = {
    */
   refreshToken: async () => {
     try {
-      const response = await api.post('/auth/refresh-token')
+      const response = await api.post('/auth/refresh')
       if (response.data?.token) {
         localStorage.setItem('token', response.data.token)
       }
