@@ -4,6 +4,20 @@ import toast from 'react-hot-toast';
 import { api } from '../api/config';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+// Helper function to transform user data
+const transformUser = (user) => {
+  if (!user) return null;
+  return {
+    id: user._id || user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatar: user.avatar,
+    isVerified: user.isVerified,
+    ...user
+  };
+};
+
 const AuthContext = createContext();
 
 const initialState = {
@@ -159,9 +173,10 @@ export const AuthProvider = ({ children }) => {
       
       try {
         // Try to get user data with existing token
-        const response = await authApi.getMe();
+        // getMe already transforms the user data
+        const user = await authApi.getMe();
         handleAuthSuccess({
-          user: response.data.user,
+          user,
           token,
           refreshToken
         });
@@ -239,11 +254,11 @@ export const AuthProvider = ({ children }) => {
   const getDashboardRoute = useCallback((userRole) => {
     switch (userRole) {
       case 'admin':
-        return '/admin/dashboard';
+        return '/admin'; // Changed from '/admin/dashboard' to match route config
       case 'owner':
-        return '/owner/dashboard';
+        return '/owner'; // Changed from '/owner/dashboard' to match route config
       case 'user':
-        return '/user/dashboard';
+        return '/user/booking'; // Changed to a valid user route
       default:
         return '/';
     }
@@ -254,22 +269,62 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'AUTH_START' });
     
     try {
+      console.log('Attempting login with credentials:', credentials);
       const response = await authApi.login(credentials);
-      const { user, token, refreshToken } = response.data;
+      console.log('Login response:', response);
       
-      storeTokens(token, refreshToken);
+      // Handle different response formats
+      let user, accessToken, refreshToken;
+      
+      // Format 1: Direct response with user and token
+      if (response?.data?.user && response?.data?.token) {
+        user = response.data.user;
+        accessToken = response.data.token;
+      }
+      // Format 2: Nested data object with user and accessToken
+      else if (response?.data?.data?.user && response?.data?.data?.accessToken) {
+        user = response.data.data.user;
+        accessToken = response.data.data.accessToken;
+      }
+      // Format 3: Direct accessToken and user
+      else if (response?.data?.accessToken && response?.data?.user) {
+        user = response.data.user;
+        accessToken = response.data.accessToken;
+      }
+      
+      // Try to get refresh token from cookies if available
+      refreshToken = response?.headers?.['set-cookie']?.[0]?.split(';')[0]?.split('=')[1] || null;
+      
+      if (!user || !accessToken) {
+        console.error('Invalid login response format:', response);
+        throw new Error('Invalid login response format');
+      }
+      
+      // Store tokens and update auth state
+      storeTokens(accessToken, refreshToken);
       dispatch({
         type: 'AUTH_SUCCESS',
-        payload: { user, token, refreshToken }
+        payload: { 
+          user: transformUser(user), 
+          token: accessToken, 
+          refreshToken,
+          permissions: user.permissions || []
+        }
       });
       
       // Redirect to the intended URL or dashboard
       const redirectPath = redirectTo || getDashboardRoute(user.role);
+      console.log('Login successful, redirecting to:', redirectPath);
       return { success: true, user, redirectTo: redirectPath };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Login failed';
+      const errorMessage = error.response?.data?.message || error.message || 'Login failed';
+      console.error('Login error:', error);
       dispatch({ type: 'AUTH_FAIL', payload: errorMessage });
-      return { success: false, error: errorMessage };
+      return { 
+        success: false, 
+        error: errorMessage,
+        details: error.response?.data || null
+      };
     }
   }, [getDashboardRoute]);
 
@@ -354,18 +409,20 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
   }, []);
 
-  const value = useMemo(() => ({
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
     ...state,
     login,
     logout,
     register,
     refreshAccessToken,
     updateProfile,
+    updateUser,
     hasRole,
     hasAnyRole,
     hasPermission,
     clearError,
-    getDashboardRoute: () => getDashboardRoute(state.user?.role)
+    getDashboardRoute: getDashboardRoute
   }), [
     state,
     login,
@@ -373,6 +430,7 @@ export const AuthProvider = ({ children }) => {
     register,
     refreshAccessToken,
     updateProfile,
+    updateUser,
     hasRole,
     hasAnyRole,
     hasPermission,
@@ -380,17 +438,19 @@ export const AuthProvider = ({ children }) => {
     getDashboardRoute
   ]);
 
+  // Use a stable reference for the provider value
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 }
 
+// Create and export the useAuth hook
 export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context
-}
+  return context;
+};

@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { useQuery } from 'react-query'
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react';
+import { useQuery } from 'react-query';
+import { Link } from 'react-router-dom';
 import {
   Users,
   Building2,
@@ -11,62 +11,81 @@ import {
   Clock,
   UserCheck,
   Shield,
-  BarChart3
-} from 'lucide-react'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
-import { RevenueChart, UserActivityChart, VenueDistributionChart } from '../../components/dashboard/AnalyticsChart'
-import { SkeletonCard, SkeletonChart } from '../../components/ui/LoadingSpinner'
-import ErrorBoundary, { ComponentErrorFallback } from '../../components/common/ErrorBoundary'
-import { adminApi } from '../../api/dashboardApi'
+  BarChart3,
+  RefreshCw
+} from 'lucide-react';
+import DashboardLayout from '../../components/dashboard/DashboardLayout';
+import { RevenueChart, UserActivityChart, VenueDistributionChart } from '../../components/dashboard/AnalyticsChart';
+import { SkeletonCard, SkeletonChart } from '../../components/ui/LoadingSpinner';
+import ErrorBoundary, { ComponentErrorFallback } from '../../components/common/ErrorBoundary';
+import { adminApi } from '../../api/dashboardApi';
+import { toast } from 'react-hot-toast';
 
 const AdminDashboard = () => {
-  const [dateRange, setDateRange] = useState('30') // days
+  const [dateRange, setDateRange] = useState('30'); // days
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Mock data - replace with actual API calls when backend is ready
-  const stats = {
-    totalUsers: 1250,
-    totalVenues: 85,
-    totalBookings: 3420,
-    totalRevenue: 125000,
-    pendingApprovals: 12,
-    activeReports: 5,
-    systemHealth: 'healthy'
-  }
+  // Fetch dashboard stats
+  const {
+    data: stats = {},
+    isLoading: isLoadingStats,
+    refetch: refetchStats
+  } = useQuery('adminStats', async () => {
+    const response = await adminApi.getAnalytics();
+    return response.data;
+  }, {
+    onError: (error) => {
+      toast.error('Failed to load dashboard stats');
+      console.error('Error fetching stats:', error);
+    }
+  });
 
-  const recentActivities = [
-    { id: 1, type: 'venue_approval', message: 'New venue "Sports Complex ABC" pending approval', time: '2 hours ago' },
-    { id: 2, type: 'user_report', message: 'User reported inappropriate behavior', time: '4 hours ago' },
-    { id: 3, type: 'booking_issue', message: 'Booking cancellation dispute raised', time: '6 hours ago' },
-    { id: 4, type: 'venue_approval', message: 'Venue "Tennis Club XYZ" approved', time: '1 day ago' },
-    { id: 5, type: 'system', message: 'System maintenance completed', time: '2 days ago' }
-  ]
+  // Fetch recent activities
+  const {
+    data: recentActivities = [],
+    isLoading: isLoadingActivities,
+    refetch: refetchActivities
+  } = useQuery('recentActivities', async () => {
+    const response = await adminApi.getActivities();
+    return response.data;
+  }, {
+    onError: (error) => {
+      toast.error('Failed to load recent activities');
+      console.error('Error fetching activities:', error);
+    }
+  });
 
-  // Analytics data
-  const revenueData = [
-    { month: 'Jan', revenue: 45000 },
-    { month: 'Feb', revenue: 52000 },
-    { month: 'Mar', revenue: 48000 },
-    { month: 'Apr', revenue: 61000 },
-    { month: 'May', revenue: 55000 },
-    { month: 'Jun', revenue: 67000 }
-  ]
+  // Refresh all data
+  const refreshData = async () => {
+    try {
+      setIsRefreshing(true);
+      await Promise.all([
+        refetchStats(),
+        refetchActivities()
+      ]);
+      toast.success('Dashboard data refreshed');
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
-  const userActivityData = [
-    { date: 'Mon', newUsers: 12, activeUsers: 145, bookings: 89 },
-    { date: 'Tue', newUsers: 8, activeUsers: 132, bookings: 76 },
-    { date: 'Wed', newUsers: 15, activeUsers: 158, bookings: 94 },
-    { date: 'Thu', newUsers: 11, activeUsers: 149, bookings: 87 },
-    { date: 'Fri', newUsers: 18, activeUsers: 167, bookings: 102 },
-    { date: 'Sat', newUsers: 22, activeUsers: 189, bookings: 125 },
-    { date: 'Sun', newUsers: 16, activeUsers: 156, bookings: 98 }
-  ]
+  // Use data from API or empty arrays if loading
+  const revenueData = stats.revenueData || [];
+  const userActivityData = stats.userActivity || [];
+  const venueDistributionData = stats.venueDistribution || [];
 
-  const venueDistributionData = [
-    { name: 'Badminton', count: 35 },
-    { name: 'Tennis', count: 25 },
-    { name: 'Basketball', count: 15 },
-    { name: 'Football', count: 10 }
-  ]
+  // Destructure stats with default values
+  const {
+    totalUsers = 0,
+    totalVenues = 0,
+    totalBookings = 0,
+    totalRevenue = 0,
+    pendingApprovals = 0,
+    activeReports = 0,
+    systemHealth = 'checking'
+  } = stats;
 
   const statCards = [
     {
@@ -98,7 +117,7 @@ const AdminDashboard = () => {
     },
     {
       title: 'Platform Revenue',
-      value: `$${stats.totalRevenue.toLocaleString()}`,
+      value: formatRevenue(stats.totalRevenue),
       change: '+18.7%',
       changeType: 'positive',
       icon: DollarSign,
@@ -161,8 +180,8 @@ const AdminDashboard = () => {
   }
 
   return (
-    <DashboardLayout 
-      title="Admin Dashboard" 
+    <DashboardLayout
+      title="Admin Dashboard"
       subtitle="Monitor platform activity and manage system operations"
     >
       {/* Date Range Filter */}
@@ -192,10 +211,9 @@ const AdminDashboard = () => {
                 <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
                 <div className="flex items-center mt-2">
-                  <span className={`text-sm font-medium ${
-                    stat.changeType === 'positive' ? 'text-green-600' : 
-                    stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-600'
-                  }`}>
+                  <span className={`text-sm font-medium ${stat.changeType === 'positive' ? 'text-green-600' :
+                      stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-600'
+                    }`}>
                     {stat.change}
                   </span>
                   <span className="text-sm text-gray-500 ml-1">vs last period</span>
@@ -308,7 +326,7 @@ const AdminDashboard = () => {
         {/* Quick Actions */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
-          
+
           <div className="space-y-3">
             {quickActions.map((action, index) => (
               <Link

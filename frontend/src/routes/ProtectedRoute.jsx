@@ -1,7 +1,7 @@
-import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { DashboardLoader } from '../components/ui/LoadingSpinner'
-import toast from 'react-hot-toast'
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 const ProtectedRoute = ({
   children,
@@ -11,42 +11,86 @@ const ProtectedRoute = ({
 }) => {
   const {
     isAuthenticated,
-    user,
     loading,
     hasAnyRole,
     hasPermission,
     getDashboardRoute
-  } = useAuth()
-  const location = useLocation()
+  } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [initialCheck, setInitialCheck] = useState(false);
 
-  if (loading) {
-    return <DashboardLoader />
-  }
+  // Check authentication and authorization status
+  useEffect(() => {
+    // Skip if still loading
+    if (loading) return;
 
-  if (!isAuthenticated) {
-    toast.error('Please login to access this page')
-    return <Navigate to="/login" state={{ from: location }} replace />
-  }
-
-  // Check role permissions
-  if (allowedRoles.length > 0 && !hasAnyRole(allowedRoles)) {
-    toast.error('You do not have permission to access this page')
-    const fallbackRoute = redirectTo || getDashboardRoute()
-    return <Navigate to={fallbackRoute} replace />
-  }
-
-  // Check specific permissions
-  if (requiredPermissions.length > 0) {
-    const hasAllPermissions = requiredPermissions.every(permission =>
-      hasPermission(permission)
-    )
-
-    if (!hasAllPermissions) {
-      toast.error('Insufficient permissions to access this resource')
-      const fallbackRoute = redirectTo || getDashboardRoute()
-      return <Navigate to={fallbackRoute} replace />
+    // If not authenticated, redirect to login immediately
+    if (!isAuthenticated) {
+      // Prevent any state updates after redirect is initiated
+      if (initialCheck) return;
+      
+      setInitialCheck(true);
+      toast.error('Please login to access this page');
+      navigate('/login', { 
+        state: { 
+          from: location.pathname !== '/login' ? location.pathname : '/',
+          preventAutoRedirect: true
+        }, 
+        replace: true 
+      });
+      return;
     }
+
+    // If authenticated, check roles and permissions
+    if (isAuthenticated) {
+      // Check roles if specified
+      if (allowedRoles.length > 0 && !hasAnyRole(allowedRoles)) {
+        toast.error('You do not have permission to access this page');
+        const fallbackRoute = redirectTo || getDashboardRoute();
+        navigate(fallbackRoute, { replace: true });
+        return;
+      }
+
+      // Check specific permissions if specified
+      if (requiredPermissions.length > 0) {
+        const hasAllPermissions = requiredPermissions.every(permission =>
+          hasPermission(permission)
+        );
+
+        if (!hasAllPermissions) {
+          toast.error('Insufficient permissions to access this resource');
+          const fallbackRoute = redirectTo || getDashboardRoute();
+          navigate(fallbackRoute, { replace: true });
+          return;
+        }
+      }
+
+      // If we get here, user is authorized
+      setIsAuthorized(true);
+    }
+  }, [
+    isAuthenticated, 
+    loading, 
+    location, 
+    navigate, 
+    allowedRoles, 
+    requiredPermissions, 
+    redirectTo, 
+    hasAnyRole, 
+    hasPermission, 
+    getDashboardRoute,
+    initialCheck
+  ]);
+
+  // Show nothing while checking auth or if not authorized
+  if (loading || !initialCheck || !isAuthorized) {
+    return null;
   }
+
+  // Only render children if user is authenticated and authorized
+  return children;
 
   return children
 }

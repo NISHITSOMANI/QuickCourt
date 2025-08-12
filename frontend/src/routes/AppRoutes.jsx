@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useRef, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from './ProtectedRoute';
 
@@ -42,34 +43,76 @@ import OwnerSettingsPage from '../pages/owner/OwnerSettingsPage';
 
 // Public route wrapper to handle authentication state
 const PublicRoute = ({ children, restricted = false }) => {
-  const { isAuthenticated, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
+  const { isAuthenticated, loading, getDashboardRoute } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [shouldRender, setShouldRender] = useState(false);
+  const [initialCheck, setInitialCheck] = useState(false);
+
+  useEffect(() => {
+    // Skip if still loading
+    if (loading) return;
+
+    // If this is a restricted route and user is authenticated, redirect to dashboard
+    if (restricted && isAuthenticated) {
+      // Prevent multiple redirects
+      if (initialCheck) return;
+      
+      setInitialCheck(true);
+      const from = location.state?.from || getDashboardRoute();
+      
+      // Only redirect if not already on the target route to prevent infinite loops
+      if (location.pathname !== from) {
+        navigate(from, { 
+          replace: true,
+          state: { preventAutoRedirect: true }
+        });
+      }
+      return;
+    }
+
+    // If we get here, it's either a public route or user is not authenticated
+    // Set a small timeout to ensure the component has time to mount
+    const timer = setTimeout(() => {
+      setShouldRender(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [
+    isAuthenticated, 
+    loading, 
+    restricted, 
+    location, 
+    navigate, 
+    getDashboardRoute, 
+    initialCheck
+  ]);
+
+  // For non-restricted routes, always show children after initial check
+  // For restricted routes, only show if we're sure we shouldn't redirect
+  if ((!restricted && !loading) || (restricted && !isAuthenticated && !loading)) {
+    return children;
   }
 
-  // If route is restricted and user is authenticated, redirect to dashboard
-  if (restricted && isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return children;
+  // Show nothing while checking auth state
+  return null;
 };
 
 // Role-based route wrapper
 const RoleBasedRoute = ({ allowedRoles, children }) => {
   const { user, isAuthenticated } = useAuth();
+  const location = useLocation();
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  if (!allowedRoles.includes(user?.role)) {
-    return <Navigate to="/unauthorized" replace />;
+  // Allow access if user has any of the allowed roles
+  const hasAccess = allowedRoles.some(role => user?.role === role);
+  
+  if (!hasAccess) {
+    console.warn(`Access denied. User role: ${user?.role}, Required roles:`, allowedRoles);
+    return <Navigate to="/unauthorized" state={{ from: location.pathname }} replace />;
   }
 
   return children;
@@ -88,13 +131,21 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route element={
-        <PublicRoute restricted={true}>
+      {/* Root route - redirects based on auth status */}
+      <Route path="/" element={
+        isAuthenticated ? (
+          <Navigate to={
+            user?.role === 'admin' ? '/admin' : 
+            user?.role === 'owner' ? '/owner' : 
+            user?.role === 'user' ? '/user/my-bookings' : 
+            '/login' 
+          } replace />
+        ) : (
           <LandingPage />
-        </PublicRoute>
-      } path="/" />
+        )
+      } />
       
+      {/* Auth Routes */}
       <Route element={
         <PublicRoute restricted={true}>
           <LoginPage />
@@ -119,6 +170,7 @@ const AppRoutes = () => {
         </PublicRoute>
       } path="/verify-email" />
       
+      {/* Public Content Routes */}
       <Route element={
         <PublicRoute>
           <BaseLayout>
@@ -139,6 +191,7 @@ const AppRoutes = () => {
           </UserLayout>
         </RoleBasedRoute>
       }>
+        <Route index element={<Navigate to="/user/my-bookings" replace />} />
         <Route path="/user/booking" element={<BookingPage />} />
         <Route path="/user/payment" element={<PaymentPage />} />
         <Route path="/user/my-bookings" element={<MyBookingsPage />} />
@@ -153,6 +206,7 @@ const AppRoutes = () => {
           </OwnerLayout>
         </RoleBasedRoute>
       }>
+        <Route index element={<Navigate to="/owner" replace />} />
         <Route path="/owner" element={<OwnerDashboard />} />
         <Route path="/owner/courts" element={<OwnerCourtsPage />} />
         <Route path="/owner/bookings" element={<OwnerBookingsPage />} />
@@ -168,6 +222,7 @@ const AppRoutes = () => {
           </AdminLayout>
         </RoleBasedRoute>
       }>
+        <Route index element={<Navigate to="/admin" replace />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/users" element={<AdminUsersPage />} />
         <Route path="/admin/facilities" element={<AdminFacilitiesPage />} />

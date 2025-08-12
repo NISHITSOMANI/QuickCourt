@@ -77,26 +77,55 @@ export const authApi = {
         headers: {
           'Content-Type': 'application/json'
         },
+        withCredentials: true, // Important for receiving cookies
         // Don't retry login on failure
         retry: {
           retries: 0
         }
       });
+
+      console.log('Login response:', response); // Debug log
       
-      // Token storage is handled by the interceptor in config.js
+      // Handle different response formats
+      let user, accessToken;
+      
+      // Format 1: response.data contains user and token directly
+      if (response.data.user && response.data.token) {
+        user = response.data.user;
+        accessToken = response.data.token;
+      } 
+      // Format 2: response.data.data contains user and accessToken
+      else if (response.data.data?.user && response.data.data?.accessToken) {
+        user = response.data.data.user;
+        accessToken = response.data.data.accessToken;
+      }
+      // Format 3: response.data contains user and accessToken directly
+      else if (response.data.user && response.data.accessToken) {
+        user = response.data.user;
+        accessToken = response.data.accessToken;
+      } else {
+        console.error('Unexpected response format:', response.data);
+        throw new Error('Unexpected response format from server');
+      }
+      
+      if (!user || !accessToken) {
+        throw new Error('Invalid login response: Missing user or token');
+      }
+      
+      // Transform user data and return with tokens
       return {
-        user: transformUser(response.data.user),
-        token: response.data.token
+        data: {
+          user: transformUser(user),
+          accessToken: accessToken
+        }
       };
     } catch (error) {
       console.error('Login error:', error);
       
       // More specific error messages based on status code
       if (error.response) {
-        if (error.response.status === 400) {
+        if (error.response.status === 400 || error.response.status === 401) {
           toast.error('Invalid email or password');
-        } else if (error.response.status === 401) {
-          toast.error('Invalid credentials. Please try again.');
         } else if (error.response.status === 403) {
           toast.error('Account not verified. Please check your email.');
         } else if (error.response.status === 429) {
@@ -118,19 +147,11 @@ export const authApi = {
    */
   /**
    * Get current authenticated user's profile
-   * @param {boolean} [forceRefresh=false] - Whether to force a fresh fetch
    * @returns {Promise<Object>} - User profile data
    */
-  getMe: async (forceRefresh = false) => {
-    const cacheKey = 'current-user';
-    
+  getMe: async () => {
     try {
       const response = await api.get('/auth/me', {
-        cacheKey: !forceRefresh ? cacheKey : undefined,
-        cacheOptions: {
-          ttl: 5 * 60 * 1000, // 5 minutes cache for user profile
-          useCache: !forceRefresh
-        },
         // Don't retry on 401 (unauthorized)
         retry: {
           retryIf: (error) => !error.response || error.response.status !== 401
@@ -140,17 +161,6 @@ export const authApi = {
       return transformUser(response.data);
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      
-      // If we have a cached response and it's not a 401, return it with a warning
-      if (error.response?.status !== 401) {
-        const cachedResponse = api.getCachedResponse('GET:/auth/me');
-        if (cachedResponse) {
-          toast('Using cached user data', { icon: '⚠️' });
-          return transformUser(cachedResponse.data);
-        }
-      }
-      
-      // 401 errors are handled by the interceptor in config.js
       throw error;
     }
   },

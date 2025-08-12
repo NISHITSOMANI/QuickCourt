@@ -17,7 +17,7 @@ const venueApi = {
    * @param {boolean} [useCache=true] - Whether to use cached response if available
    * @returns {Promise<{venues: Array, pagination: Object}>} - Transformed venues and pagination info
    */
-  getVenues: async (params = {}, useCache = true) => {
+  getVenues: async (params = {}) => {
     const defaultParams = {
       page: 1,
       limit: 12,
@@ -25,31 +25,17 @@ const venueApi = {
       ...params
     };
     
-    const cacheKey = `venues-${JSON.stringify(defaultParams)}`;
-    
     try {
       const response = await api.get('/venues', { 
-        params: defaultParams,
-        cacheKey: useCache ? cacheKey : undefined,
-        cacheOptions: {
-          ttl: 5 * 60 * 1000, // 5 minutes cache
-          useCache: useCache
-        }
+        params: defaultParams
       });
       
-      return transformVenueList(response.data);
+      // Use the imported transformVenues function
+      return transformVenues(response.data);
     } catch (error) {
       console.error('Error fetching venues:', error);
       
-      // If we have a cached response, return it with a warning
-      const cachedResponse = api.getCachedResponse(`GET:/venues?${new URLSearchParams(defaultParams).toString()}`);
-      if (cachedResponse) {
-        toast('Using cached venue data', { icon: '⚠️' });
-        return transformVenueList(cachedResponse.data);
-      }
-      
-      // No cache available, return empty results
-      console.warn('No cached venue data available');
+      // Return empty results on error
       return {
         venues: [],
         pagination: {
@@ -89,36 +75,17 @@ const venueApi = {
    * @param {boolean} [useCache=true] - Whether to use cached response if available
    * @returns {Promise<Object>} - Transformed venue details
    */
-  getVenueById: async (id, useCache = true) => {
+  getVenueById: async (id) => {
     if (!id) {
       throw new Error('Venue ID is required');
     }
     
-    const cacheKey = `venue-${id}`;
-    
     try {
-      const response = await api.get(`/venues/${id}`, {
-        cacheKey: useCache ? cacheKey : undefined,
-        cacheOptions: {
-          ttl: 15 * 60 * 1000, // 15 minutes cache for individual venues
-          useCache: useCache
-        }
-      });
-      
+      const response = await api.get(`/venues/${id}`);
       return transformVenue(response.data);
     } catch (error) {
       console.error(`Error fetching venue ${id}:`, error);
-      
-      // If we have a cached response, return it with a warning
-      const cachedResponse = api.getCachedResponse(`GET:/venues/${id}`);
-      if (cachedResponse) {
-        toast('Using cached venue data', { icon: '⚠️' });
-        return transformVenue(cachedResponse.data);
-      }
-      
-      // No cache available, throw error
-      console.warn('No cached venue data available');
-      throw new Error('Venue not found in cache');
+      throw error;
     }
   },
 
@@ -177,7 +144,7 @@ const venueApi = {
    * @param {boolean} [useCache=true] - Whether to use cached response if available
    * @returns {Promise<{reviews: Array, pagination: Object}>} - Transformed reviews and pagination info
    */
-  getVenueReviews: async (venueId, params = {}, useCache = true) => {
+  getVenueReviews: async (venueId, params = {}) => {
     if (!venueId) {
       throw new Error('Venue ID is required');
     }
@@ -189,37 +156,30 @@ const venueApi = {
       ...params
     };
     
-    const cacheKey = `venue-${venueId}-reviews-${JSON.stringify(defaultParams)}`;
-    
     try {
-      const response = await api.get(`/venues/${venueId}/reviews`, { 
-        params: defaultParams,
-        cacheKey: useCache ? cacheKey : undefined,
-        cacheOptions: {
-          ttl: 10 * 60 * 1000, // 10 minutes cache for reviews
-          useCache: useCache
-        }
+      const response = await api.get(`/venues/${venueId}/reviews`, {
+        params: defaultParams
       });
       
-      return transformReviewList(response.data);
+      return {
+        reviews: transformReviews(response.data.reviews || []),
+        pagination: response.data.pagination || {
+          total: 0,
+          page: defaultParams.page,
+          limit: defaultParams.limit,
+          totalPages: 0
+        }
+      };
     } catch (error) {
       console.error(`Error fetching reviews for venue ${venueId}:`, error);
       
-      // If we have a cached response, return it with a warning
-      const cachedResponse = api.getCachedResponse(`GET:/venues/${venueId}/reviews?${new URLSearchParams(defaultParams).toString()}`);
-      if (cachedResponse) {
-        toast('Using cached review data', { icon: '⚠️' });
-        return transformReviewList(cachedResponse.data);
-      }
-      
-      // No cache available, return empty results
-      console.warn('No cached review data available');
+      // Return empty results on error
       return {
         reviews: [],
         pagination: {
           total: 0,
-          page: params.page || 1,
-          limit: params.limit || 10,
+          page: defaultParams.page,
+          limit: defaultParams.limit,
           totalPages: 0
         }
       };
