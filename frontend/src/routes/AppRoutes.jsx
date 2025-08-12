@@ -154,7 +154,6 @@ const AppRoutes = () => {
 
       {/* User Routes */}
       <Route path="/user" element={
-      <Route path="/user" element={
         <RoleBasedRoute allowedRoles={['user']}>
           <UserLayout>
             <Outlet />
@@ -170,7 +169,6 @@ const AppRoutes = () => {
 
       {/* Owner Routes */}
       <Route path="/owner" element={
-      <Route path="/owner" element={
         <RoleBasedRoute allowedRoles={['owner']}>
           <OwnerLayout>
             <Outlet />
@@ -182,15 +180,9 @@ const AppRoutes = () => {
         <Route path="bookings" element={<OwnerBookingsPage />} />
         <Route path="earnings" element={<OwnerEarningsPage />} />
         <Route path="settings" element={<OwnerSettingsPage />} />
-        <Route index element={<OwnerDashboard />} />
-        <Route path="courts" element={<OwnerCourtsPage />} />
-        <Route path="bookings" element={<OwnerBookingsPage />} />
-        <Route path="earnings" element={<OwnerEarningsPage />} />
-        <Route path="settings" element={<OwnerSettingsPage />} />
       </Route>
 
       {/* Admin Routes */}
-      <Route path="/admin" element={
       <Route path="/admin" element={
         <RoleBasedRoute allowedRoles={['admin']}>
           <AdminLayout>
@@ -199,10 +191,6 @@ const AppRoutes = () => {
         </RoleBasedRoute>
       }>
         <Route index element={<AdminDashboard />} />
-        <Route path="users" element={<AdminUsersPage />} />
-        <Route path="facilities" element={<AdminFacilitiesPage />} />
-        <Route path="analytics" element={<AdminAnalyticsPage />} />
-        <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="users" element={<AdminUsersPage />} />
         <Route path="facilities" element={<AdminFacilitiesPage />} />
         <Route path="analytics" element={<AdminAnalyticsPage />} />

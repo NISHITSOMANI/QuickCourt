@@ -66,32 +66,32 @@ const AdminAnalyticsPage = () => {
   const statCards = [
     {
       title: 'Total Revenue',
-      value: `$${analyticsData.overview.totalRevenue.toLocaleString()}`,
-      change: `+${analyticsData.overview.revenueGrowth}%`,
+      value: `$${(analyticsData?.overview?.totalRevenue || 0).toLocaleString()}`,
+      change: `+${analyticsData?.overview?.revenueGrowth || 0}%`,
       changeType: 'positive',
       icon: DollarSign,
       color: 'bg-green-500'
     },
     {
       title: 'Total Users',
-      value: analyticsData.overview.totalUsers.toLocaleString(),
-      change: `+${analyticsData.overview.userGrowth}%`,
+      value: (analyticsData?.overview?.totalUsers || 0).toLocaleString(),
+      change: `+${analyticsData?.overview?.userGrowth || 0}%`,
       changeType: 'positive',
       icon: Users,
       color: 'bg-blue-500'
     },
     {
       title: 'Total Venues',
-      value: analyticsData.overview.totalVenues,
-      change: `+${analyticsData.overview.venueGrowth}%`,
+      value: analyticsData?.overview?.totalVenues || 0,
+      change: `+${analyticsData?.overview?.venueGrowth || 0}%`,
       changeType: 'positive',
       icon: Building2,
       color: 'bg-purple-500'
     },
     {
       title: 'Total Bookings',
-      value: analyticsData.overview.totalBookings.toLocaleString(),
-      change: `+${analyticsData.overview.bookingGrowth}%`,
+      value: (analyticsData?.overview?.totalBookings || 0).toLocaleString(),
+      change: `+${analyticsData?.overview?.bookingGrowth || 0}%`,
       changeType: 'positive',
       icon: Calendar,
       color: 'bg-orange-500'
@@ -166,14 +166,14 @@ const AdminAnalyticsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <ErrorBoundary fallback={ComponentErrorFallback}>
           <RevenueChart 
-            data={analyticsData.charts.revenue} 
+            data={analyticsData?.charts?.revenue || []} 
             title="Revenue vs Target" 
           />
         </ErrorBoundary>
         
         <ErrorBoundary fallback={ComponentErrorFallback}>
           <PerformanceChart 
-            data={analyticsData.charts.performance} 
+            data={analyticsData?.charts?.performance || []} 
             title="Key Performance Metrics" 
           />
         </ErrorBoundary>
@@ -183,14 +183,14 @@ const AdminAnalyticsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <ErrorBoundary fallback={ComponentErrorFallback}>
           <UserActivityChart 
-            data={analyticsData.charts.userActivity} 
+            data={analyticsData?.charts?.userActivity || []} 
             title="Weekly User Activity Trends" 
           />
         </ErrorBoundary>
         
         <ErrorBoundary fallback={ComponentErrorFallback}>
           <VenueDistributionChart 
-            data={analyticsData.charts.venueDistribution} 
+            data={analyticsData?.charts?.venueDistribution || []} 
             title="Venue Distribution by Sport" 
           />
         </ErrorBoundary>
@@ -200,7 +200,7 @@ const AdminAnalyticsPage = () => {
       <div className="mb-8">
         <ErrorBoundary fallback={ComponentErrorFallback}>
           <BookingsChart 
-            data={analyticsData.charts.bookingTrends} 
+            data={analyticsData?.charts?.bookingTrends || []} 
             title="Daily Booking and Cancellation Trends" 
           />
         </ErrorBoundary>

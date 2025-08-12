@@ -90,7 +90,7 @@ const AdminDashboard = () => {
   const statCards = [
     {
       title: 'Total Users',
-      value: stats.totalUsers.toLocaleString(),
+      value: (stats.totalUsers || 0).toLocaleString(),
       change: '+15.3%',
       changeType: 'positive',
       icon: Users,
@@ -99,7 +99,7 @@ const AdminDashboard = () => {
     },
     {
       title: 'Total Venues',
-      value: stats.totalVenues,
+      value: stats.totalVenues || 0,
       change: '+8.1%',
       changeType: 'positive',
       icon: Building2,
@@ -107,18 +107,27 @@ const AdminDashboard = () => {
       href: '/admin/facilities'
     },
     {
+      title: 'Pending Approvals',
+      value: stats.pendingApprovals || 0,
+      change: '-2.1%',
+      changeType: 'negative',
+      icon: Clock,
+      color: 'bg-orange-500',
+      href: '/admin/approvals'
+    },
+    {
       title: 'Total Bookings',
-      value: stats.totalBookings.toLocaleString(),
-      change: '+22.5%',
+      value: stats.totalBookings || 0,
+      change: '+12.4%',
       changeType: 'positive',
       icon: Calendar,
       color: 'bg-purple-500',
       href: '/admin/bookings'
     },
     {
-      title: 'Platform Revenue',
-      value: formatRevenue(stats.totalRevenue),
-      change: '+18.7%',
+      title: 'Total Revenue',
+      value: `$${stats.totalRevenue || 0}`,
+      change: '+5.2%',
       changeType: 'positive',
       icon: DollarSign,
       color: 'bg-yellow-500',
@@ -233,7 +242,7 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Pending Approvals</h3>
             <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-              {stats.pendingApprovals}
+              {stats.pendingApprovals || 0}
             </span>
           </div>
           <p className="text-gray-600 mb-4">Venues waiting for approval</p>
@@ -249,7 +258,7 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Active Reports</h3>
             <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-              {stats.activeReports}
+              {stats.activeReports || 0}
             </span>
           </div>
           <p className="text-gray-600 mb-4">User reports requiring attention</p>

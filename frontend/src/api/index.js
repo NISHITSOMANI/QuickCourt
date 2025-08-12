@@ -11,7 +11,7 @@ import { bookingApi } from './bookingApi';
 import { profileApi } from './profileApi';
 import { reviewApi } from './reviewApi';
 import venueApi from './venueApi';
-import { ownerApi } from './ownerApi';
+import * as ownerApi from './ownerApi';
 import { dashboardApi } from './dashboardApi';
 import { adminApi } from './adminApi';
 import { paymentApi } from './paymentApi';

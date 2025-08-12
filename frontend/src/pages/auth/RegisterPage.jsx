@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Mail, Lock, User, UserCheck } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { toast } from 'react-hot-toast';
 
 const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false)
@@ -33,46 +34,46 @@ const RegisterPage = () => {
   const onSubmit = async (data) => {
     // Critical input validation and sanitization
     if (!data.name || !data.email || !data.password || !data.confirmPassword) {
-      toast.error('Please fill in all required fields');
+      console.error('Please fill in all required fields');
       return;
     }
 
     // Name validation
     if (data.name.trim().length < 2) {
-      toast.error('Name must be at least 2 characters long');
+      console.error('Name must be at least 2 characters long');
       return;
     }
 
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
-      toast.error('Please enter a valid email address');
+      console.error('Please enter a valid email address');
       return;
     }
 
     // Password strength validation
     if (data.password.length < 8) {
-      toast.error('Password must be at least 8 characters long');
+      console.error('Password must be at least 8 characters long');
       return;
     }
 
     // Password complexity validation
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
     if (!passwordRegex.test(data.password)) {
-      toast.error('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
+      console.error('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
       return;
     }
 
     // Password confirmation validation
     if (data.password !== data.confirmPassword) {
-      toast.error('Passwords do not match');
+      console.error('Passwords do not match');
       return;
     }
 
     // Role validation
     const allowedRoles = ['user', 'owner'];
     if (!allowedRoles.includes(data.role)) {
-      toast.error('Invalid role selected');
+      console.error('Invalid role selected');
       return;
     }
 
@@ -80,7 +81,7 @@ const RegisterPage = () => {
     if (data.phone && data.phone.trim()) {
       const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
       if (!phoneRegex.test(data.phone.replace(/\s/g, ''))) {
-        toast.error('Please enter a valid phone number');
+        console.error('Please enter a valid phone number');
         return;
       }
     }
@@ -98,7 +99,7 @@ const RegisterPage = () => {
     try {
       const result = await registerUser(sanitizedData);
       if (result.success) {
-        toast.success('Registration successful! Please check your email for verification.');
+        console.success('Registration successful! Please check your email for verification.');
         
         // Security: Clear sensitive data from memory
         delete sanitizedData.password;
@@ -110,18 +111,18 @@ const RegisterPage = () => {
           }
         });
       } else {
-        toast.error(result?.error || 'Registration failed. Please try again.');
+        console.error(result?.error || 'Registration failed. Please try again.');
       }
     } catch (error) {
       console.error('Registration error:', error);
       
       // Enhanced error handling with specific messages
       if (error.response?.status === 409) {
-        toast.error('An account with this email already exists. Please login instead.');
+        console.error('An account with this email already exists. Please login instead.');
       } else if (error.response?.status === 422) {
-        toast.error('Invalid registration data. Please check your information.');
+        console.error('Invalid registration data. Please check your information.');
       } else {
-        toast.error('An error occurred during registration. Please try again.');
+        console.error('An error occurred during registration. Please try again.');
       }
     }
   }

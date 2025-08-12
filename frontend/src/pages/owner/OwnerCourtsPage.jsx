@@ -26,7 +26,7 @@ const OwnerCourtsPage = () => {
     'owner-venues',
     () => venueApi.getVenues({ owner: true }),
     {
-      select: (response) => response.data.venues || [],
+      select: (response) => response.data?.venues || [],
     }
   )
 
