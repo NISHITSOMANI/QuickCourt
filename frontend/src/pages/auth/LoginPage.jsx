@@ -1,93 +1,85 @@
-import { useState, useEffect } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { Eye, EyeOff, Mail, Lock, UserCheck } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
-import toast from 'react-hot-toast'
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { Eye, EyeOff, Mail, Lock, LogIn, UserPlus, ArrowRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const LoginPage = () => {
-  const [showPassword, setShowPassword] = useState(false)
-  const { login, loading, error, clearError } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [showPassword, setShowPassword] = useState(false);
+  const { login, loading, error, clearError } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const from = location.state?.from || '/home'
-  const bookingAction = location.state?.action === 'booking'
-  const venue = location.state?.venue
+  const from = location.state?.from?.pathname || '/dashboard';
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm()
+  } = useForm();
 
   useEffect(() => {
-    clearError()
-  }, [clearError])
+    clearError();
+  }, [clearError]);
 
   const onSubmit = async (data) => {
     try {
-      const result = await login(data, from);
-      if (result.success) {
-        // Show success message
+      const result = await login(data);
+      if (result?.success) {
         toast.success('Login successful!');
-        
-        // Handle redirect based on where the user came from
-        if (bookingAction && venue) {
-          // If user came from booking, redirect to venue details page
-          navigate(from, {
-            replace: true,
-            state: { 
-              showPaymentModal: true, 
-              venue: venue,
-              from: location.state?.from || null
-            }
-          });
-        } else if (result.redirectTo) {
-          // Redirect to the intended URL or dashboard
-          navigate(result.redirectTo, { replace: true });
-        } else {
-          // Fallback to home
-          navigate('/', { replace: true });
-        }
+        navigate(from, { replace: true });
+      } else {
+        toast.error(result?.message || 'Login failed. Please check your credentials.');
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast.error(error.message || 'Login failed. Please try again.');
+      toast.error('An error occurred during login. Please try again.');
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <div className="flex justify-center">
-            <div className="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">Q</span>
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign in to your account
+          </h2>
+        </div>
+        
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-400 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
             </div>
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Welcome back
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Sign in to your QuickCourt account
-          </p>
-        </div>
+        )}
 
-        {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4">
-            {/* Email */}
+          <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="sr-only">
                 Email address
               </label>
-              <div className="mt-1 relative">
+              <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm pl-10"
+                  placeholder="Email address"
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
@@ -95,58 +87,29 @@ const LoginPage = () => {
                       message: 'Invalid email address',
                     },
                   })}
-                  type="email"
-                  autoComplete="email"
-                  className={`
-                    block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm placeholder-gray-400 
-                    focus:outline-none focus:ring-primary-500 focus:border-primary-500
-                    ${errors.email ? 'border-red-300' : 'border-gray-300'}
-                  `}
-                  placeholder="Enter your email"
                 />
               </div>
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
               )}
             </div>
-
-            {/* Account Type */}
+            
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                Account Type
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <UserCheck className="h-5 w-5 text-gray-400" />
-                </div>
-                <select
-                  {...register('role', { required: 'Please select an account type' })}
-                  className={`
-                    block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm
-                    focus:outline-none focus:ring-primary-500 focus:border-primary-500
-                    ${errors.role ? 'border-red-300' : 'border-gray-300'}
-                  `}
-                >
-                  <option value="user">Player - Book courts and play</option>
-                  <option value="owner">Venue Owner - List and manage venues</option>
-                  <option value="admin">Administrator - Manage platform</option>
-                </select>
-              </div>
-              {errors.role && (
-                <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="sr-only">
                 Password
               </label>
-              <div className="mt-1 relative">
+              <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm pl-10"
+                  placeholder="Password"
                   {...register('password', {
                     required: 'Password is required',
                     minLength: {
@@ -154,14 +117,6 @@ const LoginPage = () => {
                       message: 'Password must be at least 6 characters',
                     },
                   })}
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  className={`
-                    block w-full pl-10 pr-10 py-2 border rounded-md shadow-sm placeholder-gray-400 
-                    focus:outline-none focus:ring-primary-500 focus:border-primary-500
-                    ${errors.password ? 'border-red-300' : 'border-gray-300'}
-                  `}
-                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
@@ -176,48 +131,22 @@ const LoginPage = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.password.message}
+                </p>
               )}
             </div>
           </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
-
-          {/* Remember me and Forgot password */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
-
             <div className="text-sm">
-              <Link to="/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
+              <Link to="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500 flex items-center">
+                <Lock className="h-4 w-4 mr-1" />
                 Forgot password?
               </Link>
             </div>
           </div>
 
-          {/* Sign up link */}
-          <div className="text-sm text-center mt-2">
-            <span className="text-gray-600">Don't have an account? </span>
-            <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
-              Sign up
-            </Link>
-          </div>
-
-          {/* Submit Button */}
           <div>
             <button
               type="submit"
@@ -225,10 +154,10 @@ const LoginPage = () => {
               className={`
                 group relative w-full flex justify-center py-2 px-4 border border-transparent 
                 text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 
-                focus:ring-offset-2 focus:ring-primary-500 transition-colors
+                focus:ring-offset-2 focus:ring-indigo-500 transition-colors
                 ${loading
                   ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-primary-600 hover:bg-primary-700'
+                  : 'bg-indigo-600 hover:bg-indigo-700'
                 }
               `}
             >
@@ -238,27 +167,37 @@ const LoginPage = () => {
                   Signing in...
                 </div>
               ) : (
-                'Sign in'
+                <>
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign in
+                </>
               )}
             </button>
           </div>
 
-          {/* Sign up link */}
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link
-                to="/register"
-                className="font-medium text-primary-600 hover:text-primary-500"
-              >
-                Sign up here
-              </Link>
-            </p>
+          <div className="relative mt-6">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-50 text-gray-500">
+                New to QuickCourt?
+              </span>
+            </div>
+          </div>
+          <div className="mt-6">
+            <Link
+              to="/register"
+              className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <UserPlus className="h-5 w-5 mr-2" />
+              Create a new account
+            </Link>
           </div>
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;
