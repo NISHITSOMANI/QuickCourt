@@ -1,4 +1,4 @@
-import api from '../api';
+import api from './config';
 
 /**
  * Get owner earnings data
@@ -101,3 +101,37 @@ export const updateNotificationPreferences = async (preferences) => {
     throw error;
   }
 };
+
+/**
+ * Get owner statistics and dashboard data
+ * @param {Object} params - Query parameters
+ * @param {string} [params.timeRange='month'] - Time range for stats (week, month, year)
+ * @returns {Promise<Object>} - Owner statistics including bookings, revenue, venues
+ */
+export const getOwnerStats = async (params = {}) => {
+  try {
+    const response = await api.get('/api/owner/stats', { 
+      params: {
+        timeRange: 'month',
+        ...params
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching owner stats:', error);
+    throw error;
+  }
+};
+
+/**
+ * Owner API service object containing all owner-related functions
+ */
+export const ownerApi = {
+  getOwnerEarnings,
+  getOwnerBookings,
+  getOwnerStats,
+  getOwnerVenues,
+  updateNotificationPreferences
+};
+
+export default ownerApi;
